@@ -1,0 +1,311 @@
+{
+  "version": "writing-2026.10.26",
+  "features": [
+    "n_words",
+    "log_words",
+    "n_sentences",
+    "n_paragraphs",
+    "words_per_paragraph",
+    "sent_len_mean",
+    "sent_len_sd",
+    "sent_len_max",
+    "word_len_mean",
+    "long_word_ratio",
+    "mattr50",
+    "hapax_ratio",
+    "distinct_ratio",
+    "oov_ratio",
+    "log_rank_mean",
+    "rare_2k_ratio",
+    "rare_5k_ratio",
+    "connectives_per_sent",
+    "connectives_distinct",
+    "subordinators_per_sent",
+    "pronoun_ratio",
+    "passive_per100",
+    "stock_phrases",
+    "errors_per100",
+    "error_kinds",
+    "lowercase_sentence_start",
+    "lowercase_i_per100",
+    "comma_no_space_per100",
+    "space_before_punct_per100",
+    "repeated_word_per100",
+    "exclaim_question",
+    "contractions_per100",
+    "prompt_coverage",
+    "intro_prompt_coverage",
+    "has_opinion",
+    "has_conclusion",
+    "conclusion_anywhere",
+    "q_discuss_both",
+    "q_adv_disadv",
+    "q_cause_solution",
+    "q_opinion",
+    "under_250",
+    "err_a_vowel",
+    "err_an_consonant",
+    "err_uncountable_plural",
+    "err_irregular_plural",
+    "err_double_comparative",
+    "err_modal_to",
+    "err_modal_past",
+    "err_did_past",
+    "err_agreement_they_is",
+    "err_agreement_it_are",
+    "err_the_most_of",
+    "err_lack_of_of",
+    "err_although_but",
+    "err_despite_of",
+    "err_discuss_about",
+    "err_make_to",
+    "err_very_adj_superlative",
+    "err_every_plural"
+  ],
+  "criteria": {
+    "TR": {
+      "trees": 104,
+      "test": {
+        "n": 1216,
+        "mae": 0.588,
+        "exact": 0.294,
+        "within_half": 0.67,
+        "qwk": 0.542,
+        "spearman": 0.633
+      },
+      "test_without_band8_model_answers": {
+        "n": 1059,
+        "mae": 0.482,
+        "exact": 0.338,
+        "within_half": 0.768,
+        "qwk": 0.539,
+        "spearman": 0.572
+      },
+      "baseline_mean": {
+        "n": 1216,
+        "mae": 0.781,
+        "exact": 0.349,
+        "within_half": 0.477,
+        "qwk": 0.0,
+        "spearman": null
+      },
+      "baseline_length_only": {
+        "n": 1216,
+        "mae": 0.765,
+        "exact": 0.178,
+        "within_half": 0.593,
+        "qwk": 0.144,
+        "spearman": 0.155
+      }
+    },
+    "CC": {
+      "trees": 90,
+      "test": {
+        "n": 1216,
+        "mae": 0.521,
+        "exact": 0.387,
+        "within_half": 0.727,
+        "qwk": 0.551,
+        "spearman": 0.679
+      },
+      "test_without_band8_model_answers": {
+        "n": 1059,
+        "mae": 0.398,
+        "exact": 0.444,
+        "within_half": 0.835,
+        "qwk": 0.548,
+        "spearman": 0.635
+      },
+      "baseline_mean": {
+        "n": 1216,
+        "mae": 0.752,
+        "exact": 0.15,
+        "within_half": 0.704,
+        "qwk": 0.0,
+        "spearman": null
+      },
+      "baseline_length_only": {
+        "n": 1216,
+        "mae": 0.72,
+        "exact": 0.199,
+        "within_half": 0.571,
+        "qwk": 0.117,
+        "spearman": 0.161
+      }
+    },
+    "LR": {
+      "trees": 86,
+      "test": {
+        "n": 1216,
+        "mae": 0.601,
+        "exact": 0.356,
+        "within_half": 0.731,
+        "qwk": 0.344,
+        "spearman": 0.449
+      },
+      "test_without_band8_model_answers": {
+        "n": 1059,
+        "mae": 0.415,
+        "exact": 0.409,
+        "within_half": 0.839,
+        "qwk": 0.192,
+        "spearman": 0.316
+      },
+      "baseline_mean": {
+        "n": 1216,
+        "mae": 0.695,
+        "exact": 0.079,
+        "within_half": 0.593,
+        "qwk": 0.0,
+        "spearman": null
+      },
+      "baseline_length_only": {
+        "n": 1216,
+        "mae": 0.689,
+        "exact": 0.224,
+        "within_half": 0.682,
+        "qwk": 0.062,
+        "spearman": 0.085
+      }
+    },
+    "GRA": {
+      "trees": 84,
+      "test": {
+        "n": 1216,
+        "mae": 0.4,
+        "exact": 0.484,
+        "within_half": 0.822,
+        "qwk": 0.365,
+        "spearman": 0.527
+      },
+      "test_without_band8_model_answers": {
+        "n": 1059,
+        "mae": 0.286,
+        "exact": 0.556,
+        "within_half": 0.941,
+        "qwk": 0.34,
+        "spearman": 0.445
+      },
+      "baseline_mean": {
+        "n": 1216,
+        "mae": 0.423,
+        "exact": 0.596,
+        "within_half": 0.813,
+        "qwk": 0.0,
+        "spearman": null
+      },
+      "baseline_length_only": {
+        "n": 1216,
+        "mae": 0.447,
+        "exact": 0.516,
+        "within_half": 0.803,
+        "qwk": 0.062,
+        "spearman": 0.132
+      }
+    }
+  },
+  "overall": {
+    "rule": "mean of the four predicted criteria, IELTS rounding (.25 and .75 round up)",
+    "test": {
+      "n": 1216,
+      "mae": 0.447,
+      "exact": 0.456,
+      "within_half": 0.817,
+      "qwk": 0.543,
+      "spearman": 0.654
+    },
+    "test_without_band8_model_answers": {
+      "n": 1059,
+      "mae": 0.303,
+      "exact": 0.524,
+      "within_half": 0.938,
+      "qwk": 0.512,
+      "spearman": 0.593
+    },
+    "baseline_mean": {
+      "n": 1216,
+      "mae": 0.591,
+      "exact": 0.146,
+      "within_half": 0.603,
+      "qwk": 0.0,
+      "spearman": null
+    }
+  },
+  "conformal": {
+    "q80": 0.796,
+    "q90": 1.252,
+    "test_coverage_90": 0.909
+  },
+  "top_features": [
+    {
+      "feature": "n_paragraphs",
+      "gain_share": 0.1776
+    },
+    {
+      "feature": "connectives_distinct",
+      "gain_share": 0.1251
+    },
+    {
+      "feature": "connectives_per_sent",
+      "gain_share": 0.0791
+    },
+    {
+      "feature": "words_per_paragraph",
+      "gain_share": 0.0768
+    },
+    {
+      "feature": "has_conclusion",
+      "gain_share": 0.063
+    },
+    {
+      "feature": "lowercase_sentence_start",
+      "gain_share": 0.0564
+    },
+    {
+      "feature": "passive_per100",
+      "gain_share": 0.0405
+    },
+    {
+      "feature": "oov_ratio",
+      "gain_share": 0.0336
+    },
+    {
+      "feature": "sent_len_sd",
+      "gain_share": 0.0271
+    },
+    {
+      "feature": "n_words",
+      "gain_share": 0.0271
+    },
+    {
+      "feature": "distinct_ratio",
+      "gain_share": 0.0207
+    },
+    {
+      "feature": "n_sentences",
+      "gain_share": 0.0196
+    }
+  ],
+  "prep": {
+    "raw_rows": 10219,
+    "exact_duplicates_dropped": 4234,
+    "leaked_essays_between_original_splits": 944,
+    "leaked_prompts_between_original_splits": 1006,
+    "rows_kept": 5985,
+    "prompts": 4216,
+    "train_rows": 4769,
+    "test_rows": 1216,
+    "band8_all_criteria_rows": 855,
+    "label_values_overall": {
+      "5.0": 42,
+      "5.5": 1446,
+      "6.0": 2710,
+      "6.5": 846,
+      "7.0": 84,
+      "8.0": 855,
+      "9.0": 2
+    }
+  },
+  "artifact_sha256": "8de1b3ed33093dbfb574b3c03e531b309a33bc4b99431cdae609bf4d79cae425",
+  "artifact_bytes": 345542
+}

@@ -1,0 +1,7 @@
+.env*
+!.env.example
+.DS_Store
+# corpus text and generated seed SQL stay local (licences: Apache-2.0 corpus is fine, ELLIPSE is NC-SA)
+ml/data/
+ml/.venv/
+db/seed/

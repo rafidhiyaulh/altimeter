@@ -1,0 +1,35 @@
+{
+  "version": "readiness-2026.10.26",
+  "slope": {
+    "reading": {
+      "mean": 0.0345,
+      "sd": 0.0324,
+      "p90": 0.0923
+    },
+    "listening": {
+      "mean": 0.0384,
+      "sd": 0.0373,
+      "p90": 0.1017
+    },
+    "speaking": {
+      "mean": 0.0409,
+      "sd": 0.0418,
+      "p90": 0.121
+    },
+    "writing": {
+      "mean": 0.0345,
+      "sd": 0.0324,
+      "p90": 0.0923
+    }
+  },
+  "noise": {
+    "practice": 0.45,
+    "mock": 0.35,
+    "ai_writing": 0.5,
+    "ai_speaking": 0.55,
+    "official": 0.2
+  },
+  "processLevel": 0.05,
+  "processSlope": 0.004,
+  "fitted_from": "8812 synthetic practice attempts (observed bands only, not the latent truth)"
+}

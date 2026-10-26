@@ -1,0 +1,162 @@
+{
+  "note": "Synthetic learners (latent truth known to the generator); real essays scored by the real model. A check that the forecast and calibration machinery behave, not evidence of real-world accuracy.",
+  "learners_with_official": 148,
+  "ai_writing_minus_latent": {
+    "mean": 0.474,
+    "n": 2224
+  },
+  "calibration_learned_on_half_0": {
+    "speaking:ai_speaking": {
+      "a": -0.153,
+      "b": 1,
+      "n": 150
+    },
+    "reading:practice": {
+      "a": 0.002,
+      "b": 1,
+      "n": 196
+    },
+    "listening:mock": {
+      "a": 0.022,
+      "b": 1,
+      "n": 35
+    },
+    "listening:practice": {
+      "a": 0.026,
+      "b": 1,
+      "n": 144
+    },
+    "writing:ai_writing": {
+      "a": -0.275,
+      "b": 1,
+      "n": 139
+    },
+    "reading:mock": {
+      "a": 0.022,
+      "b": 1,
+      "n": 35
+    }
+  },
+  "half_1_without_calibration": {
+    "reading": {
+      "n": 61,
+      "mae": 0.304,
+      "bias": -0.004,
+      "within_half": 0.918,
+      "coverage80": 0.803
+    },
+    "listening": {
+      "n": 58,
+      "mae": 0.297,
+      "bias": 0.062,
+      "within_half": 0.966,
+      "coverage80": 0.759
+    },
+    "writing": {
+      "n": 47,
+      "mae": 0.634,
+      "bias": 0.578,
+      "within_half": 0.617,
+      "coverage80": 0.426
+    },
+    "speaking": {
+      "n": 54,
+      "mae": 0.381,
+      "bias": 0.221,
+      "within_half": 0.889,
+      "coverage80": 0.778
+    }
+  },
+  "half_1_with_calibration": {
+    "reading": {
+      "n": 61,
+      "mae": 0.304,
+      "bias": 0.002,
+      "within_half": 0.918,
+      "coverage80": 0.803
+    },
+    "listening": {
+      "n": 58,
+      "mae": 0.302,
+      "bias": 0.087,
+      "within_half": 0.966,
+      "coverage80": 0.759
+    },
+    "writing": {
+      "n": 47,
+      "mae": 0.47,
+      "bias": 0.303,
+      "within_half": 0.809,
+      "coverage80": 0.596
+    },
+    "speaking": {
+      "n": 54,
+      "mae": 0.342,
+      "bias": 0.068,
+      "within_half": 0.907,
+      "coverage80": 0.815
+    }
+  },
+  "p_target_4_weeks_ahead_without_calibration": {
+    "n": 39,
+    "brier": 0.07,
+    "reliability": [
+      {
+        "mean_p": 0.04,
+        "observed": 0,
+        "n": 17
+      },
+      {
+        "mean_p": 0.29,
+        "observed": 0,
+        "n": 9
+      },
+      {
+        "mean_p": 0.51,
+        "observed": 0,
+        "n": 2
+      },
+      {
+        "mean_p": 0.73,
+        "observed": 0.71,
+        "n": 7
+      },
+      {
+        "mean_p": 0.95,
+        "observed": 1,
+        "n": 4
+      }
+    ]
+  },
+  "p_target_4_weeks_ahead_with_calibration": {
+    "n": 39,
+    "brier": 0.054,
+    "reliability": [
+      {
+        "mean_p": 0.05,
+        "observed": 0,
+        "n": 23
+      },
+      {
+        "mean_p": 0.28,
+        "observed": 0,
+        "n": 5
+      },
+      {
+        "mean_p": 0.54,
+        "observed": 0.6,
+        "n": 5
+      },
+      {
+        "mean_p": 0.69,
+        "observed": 1,
+        "n": 2
+      },
+      {
+        "mean_p": 0.88,
+        "observed": 1,
+        "n": 4
+      }
+    ]
+  }
+}

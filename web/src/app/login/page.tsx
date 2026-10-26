@@ -3,10 +3,9 @@ import { getMe } from '@/lib/auth'
 import { getT } from '@/lib/i18n-server'
 import { LoginForm } from './LoginForm'
 import { LangToggle } from '@/components/Lang'
-import { Mark } from '@/components/Shell'
 import { FeatureCard } from '@/components/ui/feature-card'
 
-export const metadata = { title: 'Sign in · Altimeter' }
+export const metadata = { title: 'Sign in to Altimeter' }
 
 export default async function Login() {
   if (await getMe()) redirect('/')
@@ -16,7 +15,6 @@ export default async function Login() {
       <div className="login-hero">
         <div className="login-top"><LangToggle /></div>
         <div className="alt-hero">
-          <div className="alt-hero-mark"><Mark size={26} /></div>
           <h1>Altimeter</h1>
           <p className="lead">{t('Siapa yang akan lulus target, siapa yang dibantu minggu ini, dan seberapa akurat skor AI.', 'Who will hit their target, who needs help this week, and how accurate the AI scores are.')}</p>
           <div className="feature-row">

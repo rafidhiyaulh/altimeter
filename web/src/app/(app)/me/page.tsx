@@ -2,7 +2,7 @@ import { requireMe } from '@/lib/auth'
 import { LearnerView } from '@/components/LearnerView'
 import { Empty } from '@/components/ui'
 
-export const metadata = { title: 'My readiness · Altimeter' }
+export const metadata = { title: 'My readiness' }
 
 export default async function MePage() {
   const me = await requireMe(['student'])

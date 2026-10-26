@@ -30,14 +30,14 @@ export default async function ReviewQueue({ searchParams }: { searchParams: Prom
     <>
       <PageHead title={t('Review esai', 'Essay review')} sub={t('Nilai ulang esai tanpa melihat skor AI.', 'Re-mark essays without seeing the AI score.')} />
       <Card pad={false} right={<Seg active={reason} items={[
-        { key: 'random_audit', label: t('Audit acak', 'Random audit'), href: '/review?r=random_audit', count: counts.a },
-        { key: 'low_confidence', label: t('AI kurang yakin', 'Low confidence'), href: '/review?r=low_confidence', count: counts.l },
-        { key: 'done', label: t('Sudah dinilai', 'Marked'), href: '/review?r=done', count: counts.d },
-      ]} />} title={reason === 'random_audit' ? <Term k="audit">{t('Audit acak 10%', '10% random audit')}</Term> : reason === 'low_confidence' ? t('Skor yang perlu dicek', 'Scores that need a check') : t('Sudah dinilai', 'Marked')}
-        sub={reason === 'random_audit' ? t('Dipilih acak, bukan dari skor.', 'Picked at random, not by score.') : undefined}>
+        { key: 'random_audit', label: t('Cek acak', 'Random check'), href: '/review?r=random_audit', count: counts.a },
+        { key: 'low_confidence', label: t('AI ragu', 'AI unsure'), href: '/review?r=low_confidence', count: counts.l },
+        { key: 'done', label: t('Sudah dinilai', 'Done'), href: '/review?r=done', count: counts.d },
+      ]} />} title={reason === 'random_audit' ? <Term k="audit">{t('Cek acak', 'Random check')}</Term> : reason === 'low_confidence' ? t('Skor yang AI-nya ragu', 'Scores the AI is unsure about') : t('Sudah dinilai guru', 'Already marked by a teacher')}
+        sub={reason === 'random_audit' ? t('1 dari 10 esai dipilih acak, supaya kita tahu seberapa akurat AI.', '1 in 10 essays is picked at random, so we know how accurate the AI is.') : reason === 'low_confidence' ? t('Esai terlalu pendek, keluar topik, atau penuh template.', 'Essays that are too short, off topic or full of templates.') : undefined}>
         <div className="table-wrap">
           <table className="data">
-            <thead><tr><th>{t('Dikirim', 'Submitted')}</th><th>{t('Learner', 'Learner')}</th><th>{t('Kohort', 'Cohort')}</th><th className="num">{t('Kata', 'Words')}</th><th>{t('Tanda', 'Flags')}</th>
+            <thead><tr><th>{t('Dikirim', 'Submitted')}</th><th>{t('Learner', 'Learner')}</th><th>{t('Kohort', 'Cohort')}</th><th className="num">{t('Kata', 'Words')}</th><th>{t('Catatan', 'Notes')}</th>
               {reason === 'done' && <><th className="num">AI</th><th className="num">{t('Guru', 'Teacher')}</th></>}<th /></tr></thead>
             <tbody>
               {rows.slice((page - 1) * per, page * per).map(r => (

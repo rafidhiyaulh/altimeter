@@ -1,16 +1,17 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { requireMe } from '@/lib/auth'
-import { asUser, n } from '@/lib/db'
+import { asUser } from '@/lib/db'
 import { getT } from '@/lib/i18n-server'
 import { UUID } from '@/lib/guard'
 import { band, date, dateTime, num, signed } from '@/lib/format'
 import { featureLabel, flagLabel } from '@/lib/labels'
-import { Badge, Card, CRIT_LABEL, Facts, PageHead } from '@/components/ui'
+import { Badge, Card, CRIT_LABEL, CRIT_SHORT, Facts, Meta, PageHead } from '@/components/ui'
+import { ArrowLeft, ChevronRight } from 'lucide-react'
 import { Term } from '@/components/Help'
 import { FeedbackPanel, ReviewForm, StatusPoller, type Fb } from '@/components/EssayClient'
 
-export const metadata = { title: 'Essay · Altimeter' }
+export const metadata = { title: 'Essay' }
 
 function highlight(text: string, quotes: string[]) {
   // mark the first occurrence of every grounded quote (case and spacing relaxed)
@@ -56,31 +57,33 @@ export default async function EssayPage({ params }: { params: Promise<{ id: stri
   const cur = versions.find(v => v.valid_to == null)
   const staff = me.role !== 'student'
   const quotes = (fb?.content?.items ?? []).map((i: { quote: string | null }) => i.quote).filter(Boolean) as string[]
+  // While a teacher still has to mark this essay blind, the AI score stays hidden.
+  const blind = staff && e.status === 'scored' && q != null && !q.done_at
   const drivers = (cur?.drivers ?? []) as { c: string; f: string; v: number; d: number }[]
 
   return (
     <>
-      <Link href={me.role === 'student' ? '/me' : `/learners/${e.student_id}`} className="back">← {me.role === 'student' ? t('Kesiapan saya', 'My readiness') : e.display_name}</Link>
-      <PageHead title={t('Esai Writing Task 2', 'Writing Task 2 essay')} sub={`${e.display_name} · ${e.cohort} · ${dateTime(e.submitted_at)} · ${num(e.word_count)} ${t('kata', 'words')}`} />
+      <Link href={me.role === 'student' ? '/me' : `/learners/${e.student_id}`} className="back"><ArrowLeft size={15} aria-hidden />{me.role === 'student' ? t('Kesiapan saya', 'My readiness') : e.display_name}</Link>
+      <PageHead title={t('Esai Writing Task 2', 'Writing Task 2 essay')} meta={<Meta items={[e.display_name, e.cohort, dateTime(e.submitted_at), t(`${num(e.word_count)} kata`, `${num(e.word_count)} words`)]} />} />
       {e.status === 'queued' && <StatusPoller id={id} />}
       <div className="cols-2">
         <div className="stack-16">
           <Card title={t('Soal', 'Prompt')}><p className="prompt-box">{e.prompt}</p></Card>
-          <Card title={t('Esai', 'Essay')} sub={quotes.length ? t('Kutipan feedback ditandai.', 'Quoted parts highlighted.') : undefined}>
-            {e.body ? <div className="essay-text">{highlight(e.body, quotes)}</div>
+          <Card title={t('Esai', 'Essay')} sub={quotes.length && !blind ? t('Kutipan feedback ditandai.', 'Quoted parts highlighted.') : undefined}>
+            {e.body ? <div className="essay-text">{highlight(e.body, blind ? [] : quotes)}</div>
               : <p className="note">{t(`Teks dihapus ${date(e.purged_at)} sesuai kebijakan masa simpan. Skor tetap ada.`, `Text deleted ${date(e.purged_at)} under the retention policy. The scores remain.`)}</p>}
           </Card>
         </div>
         <div className="stack-16">
-          {cur && (
-            <Card title={t('Skor model writing', 'Writing model score')} sub={<>{cur.model_version} · <Term k="interval">{t('rentang 80%', '80% range')}</Term> {band(cur.lo80)}-{band(cur.hi80)}</>}>
+          {cur && !blind && (
+            <Card title={t('Skor model writing', 'Writing model score')} sub={<><Term k="interval">{t('Kemungkinan antara', 'Likely between')}</Term> {band(cur.lo80)} {t('dan', 'and')} {band(cur.hi80)}</>}>
               <div className="row" style={{ alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
                 <span className="big-p">{band(cur.overall)}</span>
-                <span className="muted">{t('overall (perkiraan)', 'overall (estimate)')}</span>
+                <span className="muted">{t('perkiraan band overall, bukan skor resmi', 'estimated overall band, not an official score')}</span>
               </div>
               <div className="crit">
                 {(['tr', 'cc', 'lr', 'gra'] as const).map(k => (
-                  <div key={k}><div className="k" title={CRIT_LABEL(k.toUpperCase())}>{k.toUpperCase()}</div><div className="v">{band(cur[k])}</div></div>
+                  <div key={k}><div className="k" title={CRIT_LABEL(k.toUpperCase())}>{CRIT_SHORT(k)}</div><div className="v">{band(cur[k])}</div></div>
                 ))}
               </div>
               {cur.flags?.length > 0 && (
@@ -90,7 +93,7 @@ export default async function EssayPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
               <details className="tech">
-                <summary><Term k="drivers">{t('Mengapa band ini', 'Why this band')}</Term></summary>
+                <summary><ChevronRight size={14} aria-hidden /><Term k="drivers">{t('Mengapa band ini', 'Why this band')}</Term></summary>
                 <table className="data" style={{ marginTop: 8 }}>
                   <thead><tr><th>{t('Kriteria', 'Criterion')}</th><th>{t('Ciri esai', 'Essay feature')}</th><th className="num">{t('Nilai', 'Value')}</th><th className="num">{t('Efek', 'Effect')}</th></tr></thead>
                   <tbody>{drivers.map((x, i) => (
@@ -100,32 +103,32 @@ export default async function EssayPage({ params }: { params: Promise<{ id: stri
               </details>
             </Card>
           )}
-          {e.status === 'scored' && e.body && (
+          {e.status === 'scored' && e.body && !blind && (
             <Card title={t('Feedback', 'Feedback')} sub={<Term k="grounded">{t('Setiap kutipan dicek ada di esai', 'Every quote is checked against the essay')}</Term>}>
               <FeedbackPanel id={id} aiAllowed={Boolean(e.ai)} initial={fb ? { fb: fb.content as Fb, source: fb.source, lang: fb.lang, dropped: fb.dropped } : null} />
             </Card>
           )}
           {staff && e.status === 'scored' && (
-            <Card title={t('Nilai sebagai guru', 'Mark as a teacher')} sub={q ? <><Term k="audit">{q.reason === 'random_audit' ? t('Terpilih audit acak', 'Picked for the random audit') : q.reason === 'low_confidence' ? t('Skor AI kurang yakin', 'Low-confidence AI score') : t('Banding', 'Appeal')}</Term>{q.done_at ? ` · ${t('sudah dinilai', 'already marked')}` : ''}</> : undefined}>
-              <ReviewForm id={id} ai={cur ? { tr: n(cur.tr)!, cc: n(cur.cc)!, lr: n(cur.lr)!, gra: n(cur.gra)! } : null} />
+            <Card title={t('Nilai sebagai guru', 'Mark as a teacher')} sub={q ? <><Term k="audit">{q.reason === 'random_audit' ? t('Terpilih audit acak', 'Picked for the random audit') : q.reason === 'low_confidence' ? t('Skor AI kurang yakin', 'Low-confidence AI score') : t('Banding', 'Appeal')}</Term>{q.done_at ? `. ${t('Sudah dinilai.', 'Already marked.')}` : ''}</> : undefined}>
+              <ReviewForm id={id} blind={blind} />
             </Card>
           )}
-          {(reviews.length > 0 || versions.length > 1) && (
-            <Card title={t('Riwayat', 'History')} sub={<><Term k="ledger">{t('Ledger review', 'Review ledger')}</Term> · <Term k="bitemporal">{t('versi skor', 'score versions')}</Term></>}>
+          {!blind && (reviews.length > 0 || versions.length > 1) && (
+            <Card title={t('Riwayat', 'History')} sub={<Term k="ledger">{t('Catatan permanen, tidak bisa diubah', 'A permanent record that cannot be changed')}</Term>}>
               <ul className="divided">
                 {reviews.map(r => (
                   <li key={`r${r.seq}`}>
-                    <div className="row between"><b>{t('Guru', 'Teacher')} {band(r.overall)}</b><span className="muted small">#{r.seq} · {dateTime(r.created_at)}</span></div>
-                    <Facts tight items={[{ label: 'TR', value: band(r.tr) }, { label: 'CC', value: band(r.cc) }, { label: 'LR', value: band(r.lr) }, { label: 'GRA', value: band(r.gra) },
+                    <div className="row between"><b>{t('Guru', 'Teacher')} {band(r.overall)}</b><span className="muted small">{dateTime(r.created_at)}</span></div>
+                    <Facts tight items={[{ label: CRIT_SHORT('tr'), value: band(r.tr) }, { label: CRIT_SHORT('cc'), value: band(r.cc) }, { label: CRIT_SHORT('lr'), value: band(r.lr) }, { label: CRIT_SHORT('gra'), value: band(r.gra) },
                       { label: t('AI saat itu', 'AI then'), value: band(r.ai_overall) }, { label: t('Oleh', 'By'), value: r.reviewer ?? '-' }]} />
                     {r.note && <p className="small" style={{ marginTop: 4 }}>{r.note}</p>}
-                    <div className="mono small muted" title={r.hash}>hash {String(r.hash).slice(0, 16)}…</div>
+                    <div className="mono small muted" title={r.hash}>{t('kode pengaman', 'seal')} {String(r.hash).slice(0, 12)}</div>
                   </li>
                 ))}
                 {versions.map(v => (
                   <li key={`v${v.id}`} className="row between">
-                    <span>{t('Skor model', 'Model score')} <b>{band(v.overall)}</b> <span className="muted small">{v.model_version}</span></span>
-                    <span className="muted small">{dateTime(v.valid_from)}{v.valid_to ? ` → ${dateTime(v.valid_to)}` : ` · ${t('berlaku', 'current')}`}</span>
+                    <span>{t('Skor AI', 'AI score')} <b>{band(v.overall)}</b></span>
+                    <span className="muted small">{v.valid_to ? t(`${dateTime(v.valid_from)} sampai ${dateTime(v.valid_to)}`, `${dateTime(v.valid_from)} to ${dateTime(v.valid_to)}`) : t(`berlaku sejak ${dateTime(v.valid_from)}`, `current since ${dateTime(v.valid_from)}`)}</span>
                   </li>
                 ))}
               </ul>

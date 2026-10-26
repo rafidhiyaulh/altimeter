@@ -2,11 +2,10 @@ import { requireMe } from '@/lib/auth'
 import { asUser } from '@/lib/db'
 import { getT, titled } from '@/lib/i18n-server'
 import { agreement, bootstrap, crossTab, type Pair } from '@/lib/agreement'
-import { dateTime, dec, num, pct, signed } from '@/lib/format'
-import { Card, Kpi, PageHead, SKILL_LABEL } from '@/components/ui'
+import { date, dec, num, pct, signed } from '@/lib/format'
+import { Card, CRIT_LABEL, Kpi, PageHead, SKILL_LABEL } from '@/components/ui'
 import { Matrix, Reliability, sourceLabel } from '@/components/charts'
 import { Term } from '@/components/Help'
-import { BadgeCheck, ClipboardCheck, Scale, Sigma, SlidersHorizontal } from 'lucide-react'
 import { ActionButton } from '@/components/Action'
 import writingEval from '@/lib/evidence/writing_eval.json'
 import ellipse from '@/lib/evidence/ellipse_validation.json'
@@ -14,13 +13,13 @@ import backtest from '@/lib/evidence/readiness_backtest.json'
 
 export const generateMetadata = titled('Kepercayaan skor', 'Score trust')
 
-type Metric = { n: number; mae: number; exact: number; within_half: number; qwk: number; spearman: number }
+type Metric = { n: number; mae: number; exact: number; within_half: number; qwk: number }
 
 export default async function Trust() {
   const me = await requireMe(['platform', 'inst_admin', 'teacher'])
   const { t } = await getT()
   const d = await asUser(me, async tx => {
-    // AI score in force WHEN the teacher marked (bitemporal join), per criterion.
+    // the AI score in force WHEN the teacher marked (bitemporal join), per criterion
     const rev = await tx`
       select r.reason, r.overall::float8 as teacher, r.ai_overall::float8 as ai, r.tr::float8 as t_tr, r.cc::float8 as t_cc, r.lr::float8 as t_lr, r.gra::float8 as t_gra,
              s.tr::float8 as a_tr, s.cc::float8 as a_cc, s.lr::float8 as a_lr, s.gra::float8 as a_gra
@@ -30,12 +29,12 @@ export default async function Trust() {
     const [cal] = await tx`select id, entries, evaluation, created_at from alt.calibrations where active`
     return { rev, pairs, cal }
   })
+  const P = (rows: readonly Record<string, unknown>[], a = 'ai', b = 'teacher'): Pair[] => rows.map(r => ({ ai: Number(r[a]), ref: Number(r[b]) }))
   const audit = d.rev.filter(r => r.reason === 'random_audit')
   const low = d.rev.filter(r => r.reason === 'low_confidence')
-  const P = (rows: readonly Record<string, unknown>[], a = 'ai', b = 'teacher'): Pair[] => rows.map(r => ({ ai: Number(r[a]), ref: Number(r[b]) }))
-  const aAudit = agreement(P(audit))
-  const ciAudit = bootstrap(P(audit))
-  const aLow = agreement(P(low))
+  const A = agreement(P(audit))
+  const ci = bootstrap(P(audit))
+  const L = agreement(P(low))
   const ct = crossTab(P(audit))
   const crit = (['tr', 'cc', 'lr', 'gra'] as const).map(k => ({ k, a: agreement(P(audit, `a_${k}`, `t_${k}`)) }))
 
@@ -47,110 +46,118 @@ export default async function Trust() {
     groups.set(k, g)
   }
   const calRows = [...groups.entries()].sort((a, b) => Math.abs(b[1].d / b[1].n) - Math.abs(a[1].d / a[1].n))
-  const evalBy = (d.cal?.evaluation?.by_source ?? {}) as Record<string, { n: number; bias_before: number; mae_before: number; bias_after: number; mae_after: number }>
-  const ci = (k: 'withinHalf' | 'mae' | 'bias' | 'qwk', f: (x: number) => string) => ciAudit ? ` (${f(ciAudit[k][0])} – ${f(ciAudit[k][1])})` : ''
+  const evalBy = (d.cal?.evaluation?.by_source ?? {}) as Record<string, { mae_after: number }>
+  const entries = (d.cal?.entries ?? {}) as Record<string, { a: number }>
+  const highLow = (v: number) => Math.abs(v) < 0.05 ? t('pas', 'on target') : v > 0 ? t('terlalu tinggi', 'too high') : t('terlalu rendah', 'too low')
 
-  const we = writingEval as unknown as { overall: { test: Metric; test_without_band8_model_answers: Metric; baseline_mean: Metric }; criteria: Record<string, { test: Metric; baseline_length_only: Metric }>;
-    prep: Record<string, number>; conformal: { q80: number; q90: number; test_coverage_90: number }; version: string }
-  const bt = backtest as unknown as { half_1_without_calibration: Record<string, { mae: number; bias: number; within_half: number }>; half_1_with_calibration: Record<string, { mae: number; bias: number; within_half: number }>;
-    p_target_4_weeks_ahead_without_calibration: { brier: number }; p_target_4_weeks_ahead_with_calibration: { brier: number; n: number; reliability: { mean_p: number; observed: number; n: number }[] }; ai_writing_minus_latent: { mean: number } }
+  const we = writingEval as unknown as { overall: { test: Metric; test_without_band8_model_answers: Metric; baseline_mean: Metric }; prep: Record<string, number> }
+  const bt = backtest as unknown as { half_1_without_calibration: Record<string, { mae: number; within_half: number }>; half_1_with_calibration: Record<string, { mae: number; within_half: number }>;
+    p_target_4_weeks_ahead_with_calibration: { reliability: { mean_p: number; observed: number; n: number }[] } }
 
   return (
     <>
       <PageHead title={t('Kepercayaan skor', 'Score trust')}
-        sub={t('AI dibandingkan guru dan tes resmi, lalu dikoreksi.', 'AI checked against teachers and official tests, then corrected.')} />
+        sub={t('Bisakah skor AI dipercaya? Kami membandingkannya dengan nilai guru dan hasil IELTS resmi, lalu mengoreksinya.',
+          'Can the AI scores be trusted? We compare them with teacher marks and real IELTS results, then correct them.')} />
       <div className="kpis">
-        <Kpi icon={ClipboardCheck} label={t('Audit acak', 'Random audit')} term="audit" value={num(aAudit.n)} sub={t('sampel tak bias', 'unbiased sample')} />
-        <Kpi icon={BadgeCheck} label={t('AI vs guru ±0,5', 'AI vs teacher ±0.5')} term="within_half" value={pct(aAudit.withinHalf)} sub={`95% CI${ci('withinHalf', v => pct(v))}`} />
-        <Kpi icon={Scale} label={t('Bias AI', 'AI bias')} term="bias" value={`${signed(aAudit.bias, 2)}`} sub={`95% CI${ci('bias', v => signed(v, 2))}`} />
-        <Kpi icon={Sigma} label="QWK" term="qwk" value={dec(aAudit.qwk, 2)} sub={`95% CI${ci('qwk', v => dec(v, 2))}`} />
-        <Kpi icon={SlidersHorizontal} label={t('Kalibrasi aktif', 'Active calibration')} term="calibration" value={d.cal ? `#${d.cal.id}` : t('belum ada', 'none')} sub={d.cal ? dateTime(d.cal.created_at) : undefined} />
+        <Kpi label={t('Esai dicek guru', 'Essays checked by teachers')} term="audit" value={num(A.n)} sub={t('dipilih acak', 'picked at random')} />
+        <Kpi label={t('AI selisih ≤ 0,5 band', 'AI within 0.5 band')} term="within_half" value={pct(A.withinHalf)}
+          sub={ci ? t(`kemungkinan ${pct(ci.withinHalf[0])} sampai ${pct(ci.withinHalf[1])}`, `likely ${pct(ci.withinHalf[0])} to ${pct(ci.withinHalf[1])}`) : undefined} />
+        <Kpi label={t('AI dibanding guru', 'AI compared with teachers')} term="bias" value={`${signed(A.bias, 2)} band`} sub={highLow(A.bias)} />
+        <Kpi label={t('Skor kesepakatan', 'Agreement score')} term="qwk" value={dec(A.qwk, 2)} sub={t('0 = acak, 1 = sempurna', '0 = chance, 1 = perfect')} />
+        <Kpi label={t('Koreksi terakhir', 'Last correction')} term="calibration" value={d.cal ? date(d.cal.created_at) : t('belum ada', 'none yet')} sub={d.cal ? t('dipakai di semua perkiraan', 'used in every forecast') : undefined} />
       </div>
 
-      <div className="cols-even">
-        <Card title={t('AI vs guru: audit acak', 'AI vs teacher: random audit')}
-          sub={t('Baris = AI, kolom = guru.', 'Rows = AI, columns = teacher.')}>
-          {aAudit.n > 0 ? <Matrix rows={ct.bands} cols={ct.bands} get={ct.get} rowLabel="AI" colLabel={t('Guru', 'Teacher')} /> : <p className="muted">-</p>}
-          <table className="data" style={{ marginTop: 14 }}>
-            <thead><tr><th>{t('Sampel', 'Sample')}</th><th className="num">n</th><th className="num">{t('Sama', 'Exact')}</th><th className="num">{t('±0,5', '±0.5')}</th><th className="num">MAE</th><th className="num">{t('Bias', 'Bias')}</th><th className="num">QWK</th></tr></thead>
-            <tbody>
-              <tr><td><Term k="audit">{t('Audit acak (overall)', 'Random audit (overall)')}</Term></td><td className="num">{aAudit.n}</td><td className="num">{pct(aAudit.exact)}</td><td className="num">{pct(aAudit.withinHalf)}</td><td className="num">{dec(aAudit.mae, 2)}</td><td className="num">{signed(aAudit.bias, 2)}</td><td className="num">{dec(aAudit.qwk, 2)}</td></tr>
-              {crit.map(c => (
-                <tr key={c.k}><td className="muted">· {c.k.toUpperCase()}</td><td className="num">{c.a.n}</td><td className="num">{pct(c.a.exact)}</td><td className="num">{pct(c.a.withinHalf)}</td><td className="num">{dec(c.a.mae, 2)}</td><td className="num">{signed(c.a.bias, 2)}</td><td className="num">{dec(c.a.qwk, 2)}</td></tr>
-              ))}
-              <tr><td>{t('AI kurang yakin (overall)', 'Low confidence (overall)')}</td><td className="num">{aLow.n}</td><td className="num">{pct(aLow.exact)}</td><td className="num">{pct(aLow.withinHalf)}</td><td className="num">{dec(aLow.mae, 2)}</td><td className="num">{signed(aLow.bias, 2)}</td><td className="num">{dec(aLow.qwk, 2)}</td></tr>
-            </tbody>
-          </table>
-          <p className="muted small" style={{ marginTop: 10 }}>
-            {t('Klaim akurasi hanya dari audit acak.', 'Accuracy claims use the random audit only.')}
-          </p>
-        </Card>
+      <Card title={t('AI dibanding guru', 'AI compared with teachers')}
+        sub={t('Guru menilai ulang esai pilihan acak tanpa melihat skor AI. Kotak di garis diagonal berarti skornya sama.',
+          'Teachers re-mark randomly picked essays without seeing the AI score. Squares on the diagonal mean the same score.')}>
+        <div className="cols-even" style={{ alignItems: 'start' }}>
+          <div>
+            <div className="subhead" style={{ marginBottom: 8 }}>{t('Baris: skor AI. Kolom: nilai guru.', 'Rows: AI score. Columns: teacher mark.')}</div>
+            {A.n > 0 ? <Matrix rows={ct.bands} cols={ct.bands} get={ct.get} rowLabel="AI" colLabel={t('Guru', 'Teacher')} /> : <p className="muted">-</p>}
+          </div>
+          <div className="table-wrap">
+            <table className="data">
+              <thead><tr><th>{t('Yang dibandingkan', 'Compared')}</th><th className="num">{t('Esai', 'Essays')}</th><th className="num">{t('Sama persis', 'Exact')}</th>
+                <th className="num">{t('Selisih ≤ 0,5', 'Within 0.5')}</th><th className="num"><Term k="bias">{t('AI vs guru', 'AI vs teacher')}</Term></th></tr></thead>
+              <tbody>
+                <tr><td className="strong">{t('Skor overall', 'Overall score')}</td><td className="num">{A.n}</td><td className="num">{pct(A.exact)}</td><td className="num">{pct(A.withinHalf)}</td><td className="num">{signed(A.bias, 2)}</td></tr>
+                {crit.map(c => (
+                  <tr key={c.k} className="sub-row"><td>{CRIT_LABEL(c.k.toUpperCase())}</td><td className="num">{c.a.n}</td><td className="num">{pct(c.a.exact)}</td><td className="num">{pct(c.a.withinHalf)}</td><td className="num">{signed(c.a.bias, 2)}</td></tr>
+                ))}
+                <tr><td>{t('Esai yang AI-nya ragu', 'Essays the AI was unsure about')}</td><td className="num">{L.n}</td><td className="num">{pct(L.exact)}</td><td className="num">{pct(L.withinHalf)}</td><td className="num">{signed(L.bias, 2)}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p className="muted small" style={{ marginTop: 12 }}>{t('Klaim akurasi hanya memakai sampel acak. Esai yang AI-nya ragu sengaja dipilih karena sulit.', 'Accuracy claims use the random sample only. Essays the AI was unsure about were picked because they are hard.')}</p>
+      </Card>
 
-        <Card title={t('Skor latihan vs tes resmi', 'Practice scores vs the official test')}
-          sub={t('Skor latihan ±21 hari dari tes resmi. Positif = terlalu tinggi.', 'Practice scores within 21 days of an official test. Positive = too high.')}
-          right={me.role === 'platform' ? <ActionButton primary small url="/api/ops/calibrate">{t('Jalankan kalibrasi', 'Run calibration')}</ActionButton> : undefined}>
+      <Card title={t('Skor latihan dibanding hasil IELTS resmi', 'Practice scores compared with real IELTS results')}
+        sub={t('Untuk learner yang sudah tes resmi: skor latihan dalam 3 minggu di sekitar tes dibandingkan dengan hasilnya.',
+          'For learners who took the real test: practice scores within 3 weeks of it, compared with the result.')}
+        right={me.role === 'platform' ? <ActionButton primary small url="/api/ops/calibrate">{t('Hitung ulang koreksi', 'Recalculate correction')}</ActionButton> : undefined} pad={false}>
+        <div className="table-wrap">
           <table className="data">
-            <thead><tr><th>{t('Skill · sumber', 'Skill · source')}</th><th className="num">{t('Pasangan', 'Pairs')}</th><th className="num">{t('Bias', 'Bias')}</th><th className="num">MAE</th>
-              {d.cal && <><th className="num">{t('Koreksi', 'Correction')}</th><th className="num">{t('MAE sesudah', 'MAE after')}</th></>}</tr></thead>
+            <thead><tr><th>{t('Skill', 'Skill')}</th><th>{t('Sumber skor', 'Score source')}</th><th className="num">{t('Pasangan', 'Pairs')}</th>
+              <th className="num"><Term k="bias">{t('Latihan vs resmi', 'Practice vs real')}</Term></th><th className="num">{t('Rata-rata selisih', 'Average gap')}</th>
+              {d.cal && <><th className="num"><Term k="calibration">{t('Koreksi', 'Correction')}</Term></th><th className="num">{t('Selisih sesudah koreksi', 'Gap after correction')}</th></>}</tr></thead>
             <tbody>
               {calRows.map(([k, g]) => {
                 const [skill, source] = k.split(':')
-                const e = evalBy[k]
-                const corr = (d.cal?.entries as Record<string, { a: number }> | undefined)?.[k]?.a
+                const avg = g.d / g.n
                 return (
                   <tr key={k}>
-                    <td>{SKILL_LABEL(skill)} <span className="muted small">· {sourceLabel(source)}</span></td>
+                    <td className="strong">{SKILL_LABEL(skill)}</td>
+                    <td className="muted">{sourceLabel(source)}</td>
                     <td className="num">{num(g.n)}</td>
-                    <td className={`num ${Math.abs(g.d / g.n) >= 0.2 ? 'bad' : ''}`}>{signed(g.d / g.n, 2)}</td>
+                    <td className="num">{signed(avg, 2)} <span className={Math.abs(avg) >= 0.15 ? 'bad small' : 'muted small'}>{highLow(avg)}</span></td>
                     <td className="num">{dec(g.ad / g.n, 2)}</td>
-                    {d.cal && <><td className="num">{corr != null ? signed(corr, 2) : '-'}</td><td className="num">{e ? `${dec(e.mae_after, 2)}` : '-'}</td></>}
+                    {d.cal && <><td className="num">{entries[k]?.a != null ? signed(entries[k].a, 2) : '-'}</td><td className="num">{evalBy[k] ? dec(evalBy[k].mae_after, 2) : '-'}</td></>}
                   </tr>
                 )
               })}
             </tbody>
           </table>
-          <p className="muted small" style={{ marginTop: 10 }}>
-            {t('Koreksi per skill, diuji silang. Forecast dihitung ulang.', 'Per-skill correction, cross-checked. Forecasts are recomputed.')}
-          </p>
-        </Card>
-      </div>
+        </div>
+        <div className="table-foot">{t('Koreksi dipelajari dari separuh learner dan diuji di separuh lainnya. Setelah disimpan, semua perkiraan dihitung ulang.',
+          'The correction is learned on half the learners and tested on the other half. Once saved, every forecast is recalculated.')}</div>
+      </Card>
 
-      <h2 className="page-title" style={{ fontSize: 16, margin: '24px 0 4px' }}>{t('Bukti model (offline, dapat direproduksi)', 'Model evidence (offline, reproducible)')}</h2>
-      <p className="page-sub" style={{ marginBottom: 12 }}>{t('Dari pelatihan, bukan data demo.', 'From training, not demo data.')}</p>
-      <div className="cols-3">
-        <Card title={t('Model writing', 'Writing model')} sub={`${we.version} · ${t('soal uji tak pernah dilihat', 'test prompts never seen in training')}`}>
-          <table className="data">
-            <thead><tr><th /><th className="num">MAE</th><th className="num">{t('±0,5', '±0.5')}</th><th className="num">QWK</th></tr></thead>
+      <h2 className="section-title">{t('Bagaimana model diuji', 'How the models were tested')}</h2>
+      <p className="page-sub" style={{ marginBottom: 14 }}>{t('Diuji sekali saat pelatihan, dengan data yang tidak pernah dilihat model.', 'Tested once during training, on data the models never saw.')}</p>
+      <div className="cols-even">
+        <div className="stack-16">
+          <Card title={t('Model penilai writing', 'Writing scorer')} sub={t('Diuji pada soal yang tidak pernah dilihat saat pelatihan.', 'Tested on prompts it never saw in training.')} pad={false}>
+            <table className="data" style={{ marginTop: 4 }}>
+              <thead><tr><th /><th className="num">{t('Rata-rata selisih', 'Average gap')}</th><th className="num">{t('Selisih ≤ 0,5', 'Within 0.5')}</th></tr></thead>
+              <tbody>
+                <tr><td className="strong">{t('Model kami', 'Our model')}</td><td className="num">{dec(we.overall.test.mae, 2)}</td><td className="num">{pct(we.overall.test.within_half)}</td></tr>
+                <tr><td>{t('Tanpa esai contoh band 8', 'Without band-8 sample answers')}</td><td className="num">{dec(we.overall.test_without_band8_model_answers.mae, 2)}</td><td className="num">{pct(we.overall.test_without_band8_model_answers.within_half)}</td></tr>
+                <tr><td className="muted">{t('Pembanding: selalu menebak rata-rata', 'Baseline: always guess the average')}</td><td className="num muted">{dec(we.overall.baseline_mean.mae, 2)}</td><td className="num muted">{pct(we.overall.baseline_mean.within_half)}</td></tr>
+              </tbody>
+            </table>
+            <div className="table-foot">{t(`Dari ${num(we.prep.raw_rows)} baris data publik, ${num(we.prep.rows_kept)} esai unik tersisa setelah duplikat dibuang.`, `From ${num(we.prep.raw_rows)} public rows, ${num(we.prep.rows_kept)} unique essays remained after removing duplicates.`)}</div>
+          </Card>
+          <Card title={t('Dibandingkan dengan penilai manusia', 'Compared with human raters')} sub="ELLIPSE corpus (Crossley et al., 2023)">
+            <div className="row" style={{ alignItems: 'baseline', gap: 10 }}><span className="big-p" style={{ fontSize: 28 }}>{dec(ellipse.spearman_model_vs_human, 2)}</span>
+              <span className="muted">{t(`kesesuaian peringkat pada ${num(ellipse.n)} esai (panjang esai saja: ${dec(ellipse.spearman_length_vs_human, 2)})`, `rank agreement on ${num(ellipse.n)} essays (essay length alone: ${dec(ellipse.spearman_length_vs_human, 2)})`)}</span></div>
+            <p className="note" style={{ marginTop: 12 }}>{t('Cukup, tapi belum tinggi. Karena itu skor AI selalu dicek guru dan dikoreksi dengan hasil resmi.', 'Moderate, not high. That is why AI scores are always checked by teachers and corrected with real results.')}</p>
+          </Card>
+        </div>
+        <Card title={t('Uji perkiraan kesiapan', 'Readiness forecast test')} sub={t('Learner contoh, esai dan model asli.', 'Sample learners, real essays and model.')} pad={false}>
+          <table className="data" style={{ marginTop: 4 }}>
+            <thead><tr><th>Writing</th><th className="num">{t('Rata-rata selisih', 'Average gap')}</th><th className="num">{t('Selisih ≤ 0,5', 'Within 0.5')}</th></tr></thead>
             <tbody>
-              <tr><td>{t('Model, overall', 'Model, overall')}</td><td className="num">{dec(we.overall.test.mae, 2)}</td><td className="num">{pct(we.overall.test.within_half)}</td><td className="num">{dec(we.overall.test.qwk, 2)}</td></tr>
-              <tr><td className="muted">{t('tanpa esai contoh band 8', 'without band-8 model answers')}</td><td className="num">{dec(we.overall.test_without_band8_model_answers.mae, 2)}</td><td className="num">{pct(we.overall.test_without_band8_model_answers.within_half)}</td><td className="num">{dec(we.overall.test_without_band8_model_answers.qwk, 2)}</td></tr>
-              <tr><td className="muted">{t('Baseline: selalu rata-rata', 'Baseline: always the mean')}</td><td className="num">{dec(we.overall.baseline_mean.mae, 2)}</td><td className="num">{pct(we.overall.baseline_mean.within_half)}</td><td className="num">0</td></tr>
-              <tr><td className="muted">{t('Baseline: panjang esai saja (TR)', 'Baseline: length only (TR)')}</td><td className="num">{dec(we.criteria.TR.baseline_length_only.mae, 2)}</td><td className="num">{pct(we.criteria.TR.baseline_length_only.within_half)}</td><td className="num">{dec(we.criteria.TR.baseline_length_only.qwk, 2)}</td></tr>
+              <tr><td>{t('Tanpa koreksi', 'Without correction')}</td><td className="num">{dec(bt.half_1_without_calibration.writing.mae, 2)}</td><td className="num">{pct(bt.half_1_without_calibration.writing.within_half)}</td></tr>
+              <tr><td className="strong">{t('Dengan koreksi', 'With correction')}</td><td className="num">{dec(bt.half_1_with_calibration.writing.mae, 2)}</td><td className="num">{pct(bt.half_1_with_calibration.writing.within_half)}</td></tr>
             </tbody>
           </table>
-          <p className="muted small" style={{ marginTop: 10 }}>
-            {t(`${num(we.prep.raw_rows)} baris → ${num(we.prep.rows_kept)} esai unik setelah dedup; split ulang per soal.`, `${num(we.prep.raw_rows)} rows → ${num(we.prep.rows_kept)} unique essays after dedup; re-split by prompt.`)}
-          </p>
-        </Card>
-        <Card title={t('Validasi eksternal: penilai manusia', 'External check: human raters')} sub="ELLIPSE corpus (Crossley et al., 2023)">
-          <div className="big-p">ρ {dec(ellipse.spearman_model_vs_human, 2)}</div>
-          <p className="muted" style={{ marginTop: 6 }}>{t(`Korelasi dengan nilai manusia (${num(ellipse.n)} esai). Panjang saja: ${dec(ellipse.spearman_length_vs_human, 2)}.`, `Correlation with human scores (${num(ellipse.n)} essays). Length alone: ${dec(ellipse.spearman_length_vs_human, 2)}.`)}</p>
-          <p className="note" style={{ marginTop: 10 }}>{t('Label korpus tampak buatan mesin, jadi audit guru dan kalibrasi wajib.', 'Corpus labels look machine-made, so teacher audit and calibration are a must.')}</p>
-        </Card>
-        <Card title={t('Backtest forecast kesiapan', 'Readiness forecast backtest')} sub={t('Learner sintetis, esai & model nyata', 'Synthetic learners, real essays & model')}>
-          <table className="data">
-            <thead><tr><th>Writing</th><th className="num">MAE</th><th className="num">{t('Bias', 'Bias')}</th><th className="num">{t('±0,5', '±0.5')}</th></tr></thead>
-            <tbody>
-              <tr><td>{t('Tanpa kalibrasi', 'Uncalibrated')}</td><td className="num">{dec(bt.half_1_without_calibration.writing.mae, 2)}</td><td className="num">{signed(bt.half_1_without_calibration.writing.bias, 2)}</td><td className="num">{pct(bt.half_1_without_calibration.writing.within_half)}</td></tr>
-              <tr><td>{t('Dengan kalibrasi', 'Calibrated')}</td><td className="num">{dec(bt.half_1_with_calibration.writing.mae, 2)}</td><td className="num">{signed(bt.half_1_with_calibration.writing.bias, 2)}</td><td className="num">{pct(bt.half_1_with_calibration.writing.within_half)}</td></tr>
-            </tbody>
-          </table>
-          <div className="row" style={{ alignItems: 'flex-start', marginTop: 10, gap: 12 }}>
+          <div className="card-pad">
+            <div className="subhead" style={{ marginBottom: 6 }}>{t('Apakah "peluang lulus" bisa dipercaya?', 'Can the "chance to pass" be trusted?')}</div>
             <Reliability rows={bt.p_target_4_weeks_ahead_with_calibration.reliability} />
-            <p className="muted small" style={{ flex: 1, minWidth: 140 }}>
-              <Term k="brier">Brier</Term> {t('4 minggu sebelum tes', '4 weeks before the test')}: {dec(bt.p_target_4_weeks_ahead_without_calibration.brier, 3)} → {dec(bt.p_target_4_weeks_ahead_with_calibration.brier, 3)} {t('dengan kalibrasi', 'with calibration')}.
-              {' '}{t(`AI writing rata-rata ${signed(bt.ai_writing_minus_latent.mean, 2)} band terlalu tinggi.`, `AI writing scores ${signed(bt.ai_writing_minus_latent.mean, 2)} band too high on average.`)}
-            </p>
+            <p className="muted small" style={{ marginTop: 8 }}>{t('Titik dekat garis putus-putus berarti peluang yang diperkirakan sesuai dengan yang benar-benar terjadi, 4 minggu sebelum tes.',
+              'Dots close to the dashed line mean the predicted chance matched what really happened, 4 weeks before the test.')}</p>
           </div>
         </Card>
       </div>

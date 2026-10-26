@@ -46,9 +46,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           { href: '/glossary', label: t('Glosarium', 'Glossary') },
         ] },
       ]
-  const scope = me.role === 'platform' ? t('Tim platform, semua institusi', 'Platform team, all institutions')
-    : me.role === 'inst_admin' ? `${t('Admin', 'Admin')}, ${me.institution}`
-    : me.role === 'teacher' ? `${t('Guru', 'Teacher')}, ${me.institution}`
-    : `${t('Learner', 'Learner')}, ${me.institution}`
+  const scope = me.role === 'platform' ? t('Semua institusi', 'All institutions') : (me.institution ?? '')
   return <Shell nav={nav} me={{ name: me.display_name, scope }} signOut={signOut}>{children}</Shell>
 }

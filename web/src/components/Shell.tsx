@@ -13,18 +13,6 @@ const ICON: Record<string, LucideIcon> = {
   '/system': ServerCog, '/about': Sparkles, '/glossary': BookOpenText, '/me': UserRound, '/write': PenLine,
 }
 
-export function Mark({ size = 20 }: { size?: number }) {
-  // altimeter needle over a horizon: progress toward a target
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M5 15.5h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" opacity=".45" />
-      <path d="M12 12 16.5 6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="12" cy="12" r="1.8" fill="currentColor" />
-    </svg>
-  )
-}
-
 export function Shell({ nav, me, signOut, children }: {
   nav: NavGroup[]
   me: { name: string; scope: string }
@@ -52,14 +40,12 @@ export function Shell({ nav, me, signOut, children }: {
   const active = (href: string) => path === href || path.startsWith(`${href}/`)
   // detail pages have no menu entry of their own: show the section they belong to
   const section = path.startsWith('/cohorts') || path.startsWith('/learners') ? '/overview' : path.startsWith('/essays') ? (nav.some(g => g.items.some(i => i.href === '/review')) ? '/review' : '/me') : path
-  const current = nav.flatMap(g => g.items).find(i => active(i.href) || i.href === section)
 
   return (
     <div className="app">
       {open && <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', zIndex: 45 }} />}
       <aside className={`rail${open ? ' open' : ''}`} aria-label={t('Navigasi', 'Navigation')}>
         <Link href="/" className="rail-brand" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
-          <span className="mark"><Mark /></span>
           <div>
             <div className="product">Altimeter</div>
             <div className="sub">{t('Kesiapan & kepercayaan skor', 'Readiness & score trust')}</div>
@@ -87,15 +73,12 @@ export function Shell({ nav, me, signOut, children }: {
       <div className="main">
         <header className="topbar">
           <button className="btn btn-ghost btn-sm menu-btn" onClick={() => setOpen(true)} aria-label={t('Buka menu', 'Open menu')}><Menu size={16} /></button>
-          <span className="crumb">{current?.label ?? 'Altimeter'}</span>
+          <span className="scope">{me.scope}</span>
           <span className="spacer" />
           <button className="btn btn-ghost btn-sm" onClick={toggleTheme} aria-label={t('Ganti tema terang atau gelap', 'Switch light or dark theme')} title={t('Ganti tema', 'Switch theme')}>
             <Sun size={15} className="when-dark" /><Moon size={15} className="when-light" />
           </button>
-          <span className="small hide-xs" style={{ textAlign: 'right', lineHeight: 1.25 }}>
-            <span className="strong">{me.name}</span><br />
-            <span className="muted">{me.scope}</span>
-          </span>
+          <span className="small hide-xs strong">{me.name}</span>
           <form action={signOut}>
             <button className="btn btn-sm" aria-label={t('Keluar', 'Sign out')} title={t('Keluar', 'Sign out')}><LogOut size={14} /></button>
           </form>

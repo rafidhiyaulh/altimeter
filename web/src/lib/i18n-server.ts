@@ -14,4 +14,4 @@ export async function getT(): Promise<{ t: T; lang: Lang }> {
   return { t: tFor(lang), lang }
 }
 
-export const titled = (id: string, en: string) => async () => ({ title: `${(await getT()).t(id, en)} · Altimeter` })
+export const titled = (id: string, en: string) => async () => ({ title: (await getT()).t(id, en) })

@@ -2,7 +2,7 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 // Photo card adapted from the 21st.dev testimonial card: rounded-2xl, image on top with a hover zoom and a
-// gradient fade into a dark body, a one-line statement and a gradient label. Theme fonts, no external CSS.
+// gradient fade into a dark body, a one-line statement and a label. Theme fonts, no external CSS.
 export function FeatureCard({ src, alt, title, text, label, className }: {
   src: string; alt: string; title: string; text: string; label: string; className?: string
 }) {
@@ -16,7 +16,7 @@ export function FeatureCard({ src, alt, title, text, label, className }: {
       <figcaption className="px-4 pb-4">
         <p className="border-b border-white/15 pb-3 text-[13.5px] font-medium leading-snug">{title}</p>
         <p className="mt-3 text-[12.5px] leading-snug text-white/70">{text}</p>
-        <p className="mt-1 bg-gradient-to-r from-[#93C5FD] via-[#3B82F6] to-[#A5B4FC] bg-clip-text text-[12px] font-semibold text-transparent">{label}</p>
+        <p className="mt-1 text-[12px] font-semibold text-[#93C5FD]">{label}</p>
       </figcaption>
     </figure>
   )

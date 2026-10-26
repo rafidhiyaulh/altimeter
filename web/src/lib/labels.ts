@@ -28,6 +28,6 @@ export const featureLabel = (k: string) => (FEATURE as Record<string, string>)[k
 export const FLAG = bilingual({
   too_short: ['Terlalu pendek', 'Too short'], off_topic: ['Mungkin keluar topik', 'Possibly off topic'],
   unusual_vocabulary: ['Banyak kata tak dikenali', 'Many unrecognised words'], template_heavy: ['Banyak frasa template', 'Template-heavy'],
-  borderline: ['Di batas pembulatan', 'On a rounding boundary'],
+  borderline: ['Dekat batas band', 'Close to the next band'],
 } as const)
 export const flagLabel = (k: string) => (FLAG as Record<string, string>)[k] ?? k

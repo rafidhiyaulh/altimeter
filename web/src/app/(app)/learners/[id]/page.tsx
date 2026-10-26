@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { requireMe } from '@/lib/auth'
 import { LearnerView } from '@/components/LearnerView'
 
-export const metadata = { title: 'Learner · Altimeter' }
+export const metadata = { title: 'Learner' }
 
 export default async function LearnerPage({ params }: { params: Promise<{ id: string }> }) {
   const me = await requireMe()

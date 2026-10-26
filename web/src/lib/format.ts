@@ -8,7 +8,7 @@ export const num = (v: number | null | undefined, lang?: Lang) => (v == null || 
 export const pct = (v: number | null | undefined, digits = 0, lang?: Lang) =>
   v == null || Number.isNaN(v) ? '-' : `${(v * 100).toLocaleString(L(lang), { maximumFractionDigits: digits })}%`
 export const dec = (v: number | null | undefined, digits = 2, lang?: Lang) =>
-  v == null || Number.isNaN(v) ? '-' : v.toLocaleString(L(lang), { minimumFractionDigits: 0, maximumFractionDigits: digits })
+  v == null || Number.isNaN(v) ? '-' : v.toLocaleString(L(lang), { minimumFractionDigits: digits, maximumFractionDigits: digits })
 // IELTS bands always show one decimal: 6.0, 6.5.
 export const band = (v: number | string | null | undefined, lang?: Lang) =>
   v == null || v === '' || Number.isNaN(Number(v)) ? '-' : Number(v).toLocaleString(L(lang), { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -30,7 +30,8 @@ export function ago(v: string | Date | number | null | undefined, lang?: Lang) {
   const s = (Date.now() - new Date(v).getTime()) / 1000
   if (s < 90) return en ? 'just now' : 'baru saja'
   if (s < 3600) return en ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 60)} menit lalu`
-  if (s < 86400 * 2) return en ? `${Math.round(s / 3600)} h ago` : `${Math.round(s / 3600)} jam lalu`
+  if (s < 86400) return en ? `${Math.round(s / 3600)} h ago` : `${Math.round(s / 3600)} jam lalu`
+  if (s < 86400 * 1.5) return en ? 'yesterday' : 'kemarin'
   return en ? `${Math.round(s / 86400)} days ago` : `${Math.round(s / 86400)} hari lalu`
 }
 

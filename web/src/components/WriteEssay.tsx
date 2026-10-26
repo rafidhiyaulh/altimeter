@@ -39,19 +39,21 @@ export function WriteEssay({ prompts }: { prompts: Prompt[] }) {
       <div className="choice" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
         {prompts.map(p => (
           <button key={p.id} type="button" className={p.id === pick ? 'on' : undefined} onClick={() => setPick(p.id)}>
-            <span><span className="h">{qt[p.question_type] ?? p.question_type}</span><span className="t" style={{ fontWeight: 500 }}>{p.body.length > 160 ? p.body.slice(0, 160) + '…' : p.body}</span></span>
+            <span><span className="h">{qt[p.question_type] ?? p.question_type}</span><span className="t" style={{ fontWeight: 500 }}>{cap(p.body.length > 160 ? p.body.slice(0, 160) + '…' : p.body)}</span></span>
           </button>
         ))}
       </div>
-      {prompt && <p className="prompt-box">{prompt.body}</p>}
+      {prompt && <p className="prompt-box">{cap(prompt.body)}</p>}
       <textarea className="textarea writer" value={text} onChange={e => { setText(e.target.value); if (!started) { const at = e.timeStamp ? performance.timeOrigin + e.timeStamp : 0; setStarted(at); setNow(at) } }}
         placeholder={t('Minimal 250 kata, 40 menit.', 'At least 250 words, 40 minutes.')} />
       <div className="row between">
-        <span className="counter">{words} {t('kata', 'words')}{words < 250 && ` · ${250 - words} ${t('lagi untuk 250', 'more to reach 250')}`} · {t('sisa waktu', 'time left')} {mmss}</span>
+        <span className="counter row" style={{ gap: 18 }}><span>{t(`${words} kata`, `${words} words`)}{words < 250 && <span className="muted">{t(` (kurang ${250 - words})`, ` (${250 - words} to go)`)}</span>}</span><span>{t('Sisa waktu', 'Time left')} {mmss}</span></span>
         <button className="btn btn-primary" disabled={pending || text.length < 200} onClick={submit}>{pending ? t('Mengirim...', 'Submitting...') : t('Kirim untuk dinilai', 'Submit for scoring')}</button>
       </div>
       {err && <p className="alert">{err}</p>}
-      <p className="muted small">{t('Skor perkiraan, bukan skor resmi. Teks ke LLM hanya dengan izin.', 'An estimate, not an official score. Text goes to an LLM only with consent.')}</p>
+      <p className="muted small">{t('Skor ini perkiraan, bukan skor resmi. Esai hanya dikirim ke AI untuk feedback jika Anda sudah memberi izin.', 'This is an estimate, not an official score. Your essay goes to AI for feedback only if you have given consent.')}</p>
     </div>
   )
 }
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)

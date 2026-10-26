@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import type { ComponentType, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { InfoTip, type TermKey } from './Help'
 import { tr } from '@/lib/i18n'
 import { band, pct } from '@/lib/format'
@@ -14,12 +14,13 @@ export function Badge({ tone = 'neutral', children, title }: { tone?: Tone; chil
   return <span className={`badge b-${tone}`} title={title}>{children}</span>
 }
 
-export function PageHead({ title, sub, children }: { title: string; sub?: ReactNode; children?: ReactNode }) {
+export function PageHead({ title, sub, meta, children }: { title: string; sub?: ReactNode; meta?: ReactNode; children?: ReactNode }) {
   return (
     <div className="page-head">
       <div>
         <h1 className="page-title">{title}</h1>
         {sub && <p className="page-sub">{sub}</p>}
+        {meta}
       </div>
       {children && <div className="toolbar">{children}</div>}
     </div>
@@ -45,15 +46,14 @@ export function Card({ title, sub, right, children, pad = true, className, id }:
   )
 }
 
-// KPI in the Statistics-card pattern (ReUI on 21st.dev): icon chip + label, big number with an optional delta badge.
-export function Kpi({ label, value, sub, tone, keyColor, term, help, href, on, icon: Icon, delta }: {
+// KPI cell inside one divided strip: grey label over the value, an optional delta in words.
+export function Kpi({ label, value, sub, tone, keyColor, term, help, href, on, delta }: {
   label: string; value: ReactNode; sub?: ReactNode; tone?: 'bad'; keyColor?: string; term?: TermKey; help?: string; href?: string; on?: boolean
-  icon?: ComponentType<{ size?: number; strokeWidth?: number }>; delta?: { text: string; tone: 'good' | 'bad' | 'neutral' }
+  delta?: { text: string; tone: 'good' | 'bad' | 'neutral' }
 }) {
   const body = (
     <>
       <div className="label">
-        {Icon && <span className="ico" aria-hidden><Icon size={16} strokeWidth={1.8} /></span>}
         {keyColor && <span className="key" style={{ background: keyColor }} aria-hidden />}
         <span>{label}</span>{(term || help) && <InfoTip k={term} text={help} />}
       </div>
@@ -64,6 +64,11 @@ export function Kpi({ label, value, sub, tone, keyColor, term, help, href, on, i
   return href
     ? <Link href={href} className={cx('kpi', on && 'on')} aria-current={on ? 'page' : undefined}>{body}</Link>
     : <div className="kpi">{body}</div>
+}
+
+// A line of facts about the page subject, separated by space only (no dots or bars between them).
+export function Meta({ items }: { items: (ReactNode | null | false | undefined)[] }) {
+  return <div className="meta">{items.filter(Boolean).map((x, i) => <span key={i}>{x}</span>)}</div>
 }
 
 export function Facts({ items, tight }: { items: { label: string; value: ReactNode }[]; tight?: boolean }) {
@@ -122,6 +127,11 @@ export function ReadyBadge({ status }: { status: string | null }) {
 export const SKILL_LABEL = (s: string) => ({
   reading: tr('Reading', 'Reading'), listening: tr('Listening', 'Listening'), writing: tr('Writing', 'Writing'), speaking: tr('Speaking', 'Speaking'),
 } as Record<string, string>)[s] ?? s
+
+// Short plain names for the four IELTS writing criteria; CRIT_LABEL holds the official names.
+export const CRIT_SHORT = (c: string) => ({
+  TR: tr('Isi & tugas', 'Task'), CC: tr('Alur', 'Flow'), LR: tr('Kosakata', 'Vocabulary'), GRA: tr('Tata bahasa', 'Grammar'),
+} as Record<string, string>)[c.toUpperCase()] ?? c
 
 export const CRIT_LABEL = (c: string) => ({
   TR: tr('Task Response', 'Task Response'), CC: tr('Coherence & Cohesion', 'Coherence & Cohesion'),

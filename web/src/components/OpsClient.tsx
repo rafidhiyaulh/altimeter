@@ -33,15 +33,15 @@ export function OpsPanel() {
   return (
     <div className="stack">
       <div className="kv c4">
-        <div><div className="k">{t('Antrean', 'Queue depth')}</div><div className="v">{s?.queue.depth ?? '-'}</div></div>
-        <div><div className="k">DLQ</div><div className="v">{s?.queue.dlq ?? '-'}</div></div>
-        <div><div className="k">{t('Skor "berlaku" ganda', 'Duplicate "current" scores')}</div><div className={`v ${s?.duplicate_current ? 'bad' : 'ok'}`}>{s?.duplicate_current ?? '-'}</div></div>
-        <div><div className="k">{t('Worker 10 menit', 'Workers, 10 min')}</div><div className="v">{s?.runs?.length ?? 0}</div></div>
+        <div><div className="k">{t('Job menunggu', 'Jobs waiting')}</div><div className="v">{s?.queue.depth ?? '-'}</div></div>
+        <div><div className="k">{t('Job gagal (DLQ)', 'Failed jobs (DLQ)')}</div><div className="v">{s?.queue.dlq ?? '-'}</div></div>
+        <div><div className="k">{t('Skor dobel', 'Double scores')}</div><div className={`v ${s?.duplicate_current ? 'bad' : 'ok'}`}>{s?.duplicate_current ?? '-'}</div></div>
+        <div><div className="k">{t('Worker, 10 menit', 'Workers, 10 min')}</div><div className="v">{s?.runs?.length ?? 0}</div></div>
       </div>
       {b && (
         <div className="note info">
           {t('Batch', 'Batch')} #{b.id}: <b>{b.done}</b> / {b.n} {t('esai dinilai ulang', 'essays re-scored')} {t('oleh', 'by')} {b.workers} worker
-          {secs != null && b.done > 0 && <> · {(b.done / Math.max(1, secs)).toFixed(1)} {t('esai/detik', 'essays/s')} · {secs.toFixed(0)} s</>}
+          {secs != null && b.done > 0 && <>{t(`, ${(b.done / Math.max(1, secs)).toFixed(1)} esai per detik, ${secs.toFixed(0)} detik.`, `, ${(b.done / Math.max(1, secs)).toFixed(1)} essays per second, ${secs.toFixed(0)} s.`)}</>}
           <div className="track" style={{ height: 4, background: 'var(--panel-alt)', borderRadius: 2, marginTop: 6 }}>
             <div style={{ height: '100%', width: `${Math.min(100, (b.done / Math.max(1, b.n)) * 100)}%`, background: 'var(--brand)', borderRadius: 2 }} />
           </div>
@@ -72,6 +72,8 @@ export function ApiKeys({ institutions, keys }: { institutions: { id: number; na
   const [label, setLabel] = useState('Acsent platform')
   const [shown, setShown] = useState<string | null>(null)
   const [pending, start] = useTransition()
+  const active = keys.filter(k => !k.revoked_at)
+  const revoked = keys.length - active.length
   const create = () => start(async () => {
     const r = await fetch('/api/ops/api-keys', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ institution_id: inst, label }) }).then(x => x.json())
     if (r.key) setShown(r.key)
@@ -84,15 +86,17 @@ export function ApiKeys({ institutions, keys }: { institutions: { id: number; na
         <input className="input" value={label} onChange={e => setLabel(e.target.value)} maxLength={60} aria-label="label" />
         <button className="btn btn-sm btn-primary" disabled={pending} onClick={create}>{t('Buat key', 'Create key')}</button>
       </div>
-      {shown && <div><div className="muted small">{t('Salin sekarang; key tidak akan ditampilkan lagi.', 'Copy it now; it will not be shown again.')}</div><div className="key-once">{shown}</div></div>}
-      <table className="data">
-        <thead><tr><th>{t('Prefix', 'Prefix')}</th><th>{t('Institusi', 'Institution')}</th><th>{t('Label', 'Label')}</th><th>{t('Terakhir dipakai', 'Last used')}</th><th /></tr></thead>
-        <tbody>{keys.map(k => (
-          <tr key={k.id}><td className="mono small">alt_live_{k.prefix}…</td><td>{k.institution}</td><td>{k.label}</td><td className="small">{k.last_used_at ? dateTime(k.last_used_at, lang) : '-'}</td>
-            <td>{k.revoked_at ? <span className="muted small">{t('dicabut', 'revoked')}</span> : <ActionButton small url={`/api/ops/api-keys/${k.id}`} confirmText={t('Cabut?', 'Revoke?')}>{t('Cabut', 'Revoke')}</ActionButton>}</td></tr>))}
-          {keys.length === 0 && <tr><td colSpan={5} className="muted">{t('Belum ada key.', 'No keys yet.')}</td></tr>}
+      {shown && <div><div className="muted small">{t('Salin sekarang. Key ini tidak akan ditampilkan lagi.', 'Copy it now. It will not be shown again.')}</div><div className="key-once">{shown}</div></div>}
+      <div className="table-wrap"><table className="data">
+        <thead><tr><th>{t('Key', 'Key')}</th><th>{t('Label', 'Label')}</th><th>{t('Terakhir dipakai', 'Last used')}</th><th /></tr></thead>
+        <tbody>{active.map(k => (
+          <tr key={k.id}><td><span className="mono small">alt_live_{k.prefix}…</span><div className="muted small">{k.institution}</div></td><td>{k.label}</td>
+            <td className="small nowrap">{k.last_used_at ? dateTime(k.last_used_at, lang) : t('belum pernah', 'never')}</td>
+            <td className="num"><ActionButton small url={`/api/ops/api-keys/${k.id}`} confirmText={t('Cabut key ini?', 'Revoke this key?')}>{t('Cabut', 'Revoke')}</ActionButton></td></tr>))}
+          {active.length === 0 && <tr><td colSpan={4} className="muted">{t('Belum ada key aktif.', 'No active keys.')}</td></tr>}
         </tbody>
-      </table>
+      </table></div>
+      {revoked > 0 && <div className="muted small">{t(`${revoked} key sudah dicabut dan tidak bisa dipakai lagi.`, `${revoked} revoked keys can no longer be used.`)}</div>}
     </div>
   )
 }

@@ -3,12 +3,17 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LogOut, Menu, Moon, Sun } from 'lucide-react'
+import { BookOpenText, ClipboardCheck, FileText, Gauge, LayoutDashboard, LogOut, Menu, Moon, PenLine, ServerCog, ShieldCheck, Sparkles, Sun, UserRound, type LucideIcon } from 'lucide-react'
 import { LangToggle, useT } from './Lang'
 
 export type NavGroup = { group: string; items: { href: string; label: string; count?: number }[] }
 
-export function Mark({ size = 22 }: { size?: number }) {
+const ICON: Record<string, LucideIcon> = {
+  '/overview': LayoutDashboard, '/review': ClipboardCheck, '/reports': FileText, '/trust': Gauge, '/privacy': ShieldCheck,
+  '/system': ServerCog, '/about': Sparkles, '/glossary': BookOpenText, '/me': UserRound, '/write': PenLine,
+}
+
+export function Mark({ size = 20 }: { size?: number }) {
   // altimeter needle over a horizon: progress toward a target
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -64,11 +69,14 @@ export function Shell({ nav, me, signOut, children }: {
           {nav.map(g => (
             <div key={g.group}>
               <div className="group">{g.group}</div>
-              {g.items.map(i => (
-                <Link key={i.href} href={i.href} onClick={() => setOpen(false)} className={`nav-item${active(i.href) ? ' is-active' : ''}`}>
-                  {i.label}{i.count != null && <span className="count">{i.count.toLocaleString(lang === 'en' ? 'en-GB' : 'id-ID')}</span>}
+              {g.items.map(i => {
+                const Icon = ICON[i.href]
+                return (
+                <Link key={i.href} href={i.href} onClick={() => setOpen(false)} className={`nav-item${active(i.href) || i.href === section ? ' is-active' : ''}`}>
+                  {Icon && <Icon size={16} strokeWidth={1.8} aria-hidden />}{i.label}{i.count != null && <span className="count">{i.count.toLocaleString(lang === 'en' ? 'en-GB' : 'id-ID')}</span>}
                 </Link>
-              ))}
+                )
+              })}
             </div>
           ))}
         </nav>

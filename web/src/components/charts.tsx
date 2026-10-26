@@ -69,15 +69,15 @@ export function Trajectory({ title, points, path, projection, minSkill, start, e
         {ticks.map(b => (
           <g key={b}>
             <line x1={L} x2={W - R} y1={y(b)} y2={y(b)} stroke="var(--chart-grid)" />
-            <text x={L - 6} y={y(b) + 3.5} textAnchor="end" fontSize="9.5" fill="var(--muted)">{b}</text>
+            <text x={L - 6} y={y(b) + 3.5} textAnchor="end" fontSize="9.5" fill="var(--muted-foreground)">{b}</text>
           </g>
         ))}
-        <line x1={L} x2={W - R} y1={y(minSkill)} y2={y(minSkill)} stroke="var(--muted)" strokeDasharray="3 3" />
-        <text x={L + 3} y={y(minSkill) - 4} fontSize="9" fill="var(--muted)">{`min ${band(minSkill)}`}</text>
+        <line x1={L} x2={W - R} y1={y(minSkill)} y2={y(minSkill)} stroke="var(--muted-foreground)" strokeDasharray="3 3" />
+        <text x={L + 3} y={y(minSkill) - 4} fontSize="9" fill="var(--muted-foreground)">{`min ${band(minSkill)}`}</text>
         <line x1={x(now)} x2={x(now)} y1={T} y2={H - B} stroke="var(--rule2)" />
-        <text x={x(now)} y={H - 8} textAnchor="middle" fontSize="9" fill="var(--muted)">{tr('hari ini', 'today')}</text>
-        <text x={L} y={H - 8} fontSize="9" fill="var(--muted)">{shortDate(start)}</text>
-        <text x={W - R} y={H - 8} textAnchor="end" fontSize="9" fill="var(--muted)">{shortDate(end)}</text>
+        <text x={x(now)} y={H - 8} textAnchor="middle" fontSize="9" fill="var(--muted-foreground)">{tr('hari ini', 'today')}</text>
+        <text x={L} y={H - 8} fontSize="9" fill="var(--muted-foreground)">{shortDate(start)}</text>
+        <text x={W - R} y={H - 8} textAnchor="end" fontSize="9" fill="var(--muted-foreground)">{shortDate(end)}</text>
         {band1 && <path d={band1} fill="var(--brand)" opacity=".12" />}
         {projection && (
           <>
@@ -135,8 +135,8 @@ export function Reliability({ rows }: { rows: { mean_p: number; observed: number
       {[0, 0.25, 0.5, 0.75, 1].map(v => (
         <g key={v}>
           <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke="var(--chart-grid)" />
-          <text x={L - 6} y={y(v) + 3.5} textAnchor="end" fontSize="9.5" fill="var(--muted)">{pct(v)}</text>
-          <text x={x(v)} y={H - 12} textAnchor="middle" fontSize="9.5" fill="var(--muted)">{pct(v)}</text>
+          <text x={L - 6} y={y(v) + 3.5} textAnchor="end" fontSize="9.5" fill="var(--muted-foreground)">{pct(v)}</text>
+          <text x={x(v)} y={H - 12} textAnchor="middle" fontSize="9.5" fill="var(--muted-foreground)">{pct(v)}</text>
         </g>
       ))}
       <line x1={x(0)} y1={y(0)} x2={x(1)} y2={y(1)} stroke="var(--rule2)" strokeDasharray="3 3" />
@@ -148,7 +148,7 @@ export function Reliability({ rows }: { rows: { mean_p: number; observed: number
           </circle>
         </g>
       ))}
-      <text x={(L + W - R) / 2} y={H - 1} textAnchor="middle" fontSize="9.5" fill="var(--muted)">{tr('peluang yang diprediksi', 'predicted chance')}</text>
+      <text x={(L + W - R) / 2} y={H - 1} textAnchor="middle" fontSize="9.5" fill="var(--muted-foreground)">{tr('peluang yang diprediksi', 'predicted chance')}</text>
     </svg>
   )
 }

@@ -7,6 +7,7 @@ import { band, date, num, pct, requestNow, signed } from '@/lib/format'
 import { Card, Kpi, PageHead, Badge } from '@/components/ui'
 import { StatusBar } from '@/components/charts'
 import { Term } from '@/components/Help'
+import { AlertTriangle, ClipboardCheck, Gauge, TrendingUp, Users } from 'lucide-react'
 
 export const generateMetadata = titled('Ringkasan', 'Overview')
 
@@ -34,13 +35,13 @@ export default async function Overview() {
         sub={t('Siapa lulus target, siapa dibantu minggu ini.', 'Who hits the target, who needs help this week.')}
       />
       <div className="kpis">
-        <Kpi label={t('Learner', 'Learners')} value={num(tot.learners)} sub={`${num(tot.active)} ${t('aktif 14 hari terakhir', 'active in the last 14 days')}`} />
-        <Kpi label={t('Sesuai jalur', 'On track')} term="p_target" keyColor="var(--chart-good)" value={pct(forecastable ? tot.on_track / forecastable : null)}
+        <Kpi icon={Users} label={t('Learner', 'Learners')} value={num(tot.learners)} sub={`${num(tot.active)} ${t('aktif 14 hari terakhir', 'active in the last 14 days')}`} />
+        <Kpi icon={TrendingUp} label={t('Sesuai jalur', 'On track')} term="p_target" value={pct(forecastable ? tot.on_track / forecastable : null)}
           sub={`${num(tot.on_track)} ${t('dari', 'of')} ${num(forecastable)} ${t('yang bisa diperkirakan', 'with a forecast')}`} />
-        <Kpi label={t('Berisiko', 'At risk')} keyColor="var(--chart-bad)" value={num(tot.at_risk)}
+        <Kpi icon={AlertTriangle} label={t('Berisiko', 'At risk')} value={num(tot.at_risk)} delta={tot.newly > 0 ? { text: `+${num(tot.newly)}`, tone: 'bad' } : undefined}
           sub={tot.newly > 0 ? `${num(tot.newly)} ${t('baru dalam 7 hari', 'new in the last 7 days')}` : t('tidak ada yang baru minggu ini', 'none new this week')} tone={tot.newly > 0 ? 'bad' : undefined} />
-        <Kpi label={t('Esai menunggu review', 'Essays awaiting review')} term="audit" value={num(tot.reviews)} href="/review" />
-        <Kpi label={t('AI vs guru ±0,5', 'AI vs teacher ±0.5')} term="within_half" value={pct(n(trust?.within))}
+        <Kpi icon={ClipboardCheck} label={t('Menunggu review', 'Awaiting review')} term="audit" value={num(tot.reviews)} href="/review" />
+        <Kpi icon={Gauge} label={t('AI vs guru ±0,5', 'AI vs teacher ±0.5')} term="within_half" value={pct(n(trust?.within))}
           sub={`${t('bias', 'bias')} ${signed(n(trust?.bias), 2)} ${t('band', 'band')} · n=${num(trust?.reviews)}`} href="/trust" />
       </div>
 

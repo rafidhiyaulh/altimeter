@@ -6,6 +6,7 @@ import { dateTime, dec, num, pct, signed } from '@/lib/format'
 import { Card, Kpi, PageHead, SKILL_LABEL } from '@/components/ui'
 import { Matrix, Reliability, sourceLabel } from '@/components/charts'
 import { Term } from '@/components/Help'
+import { BadgeCheck, ClipboardCheck, Scale, Sigma, SlidersHorizontal } from 'lucide-react'
 import { ActionButton } from '@/components/Action'
 import writingEval from '@/lib/evidence/writing_eval.json'
 import ellipse from '@/lib/evidence/ellipse_validation.json'
@@ -59,11 +60,11 @@ export default async function Trust() {
       <PageHead title={t('Kepercayaan skor', 'Score trust')}
         sub={t('AI dibandingkan guru dan tes resmi, lalu dikoreksi.', 'AI checked against teachers and official tests, then corrected.')} />
       <div className="kpis">
-        <Kpi label={t('Audit acak', 'Random audit')} term="audit" value={num(aAudit.n)} sub={t('sampel tak bias', 'unbiased sample')} />
-        <Kpi label={t('AI vs guru ±0,5', 'AI vs teacher ±0.5')} term="within_half" value={pct(aAudit.withinHalf)} sub={`95% CI${ci('withinHalf', v => pct(v))}`} />
-        <Kpi label={t('Bias AI', 'AI bias')} term="bias" value={`${signed(aAudit.bias, 2)}`} sub={`95% CI${ci('bias', v => signed(v, 2))}`} />
-        <Kpi label="QWK" term="qwk" value={dec(aAudit.qwk, 2)} sub={`95% CI${ci('qwk', v => dec(v, 2))}`} />
-        <Kpi label={t('Kalibrasi aktif', 'Active calibration')} term="calibration" value={d.cal ? `#${d.cal.id}` : t('belum ada', 'none')} sub={d.cal ? dateTime(d.cal.created_at) : undefined} />
+        <Kpi icon={ClipboardCheck} label={t('Audit acak', 'Random audit')} term="audit" value={num(aAudit.n)} sub={t('sampel tak bias', 'unbiased sample')} />
+        <Kpi icon={BadgeCheck} label={t('AI vs guru ±0,5', 'AI vs teacher ±0.5')} term="within_half" value={pct(aAudit.withinHalf)} sub={`95% CI${ci('withinHalf', v => pct(v))}`} />
+        <Kpi icon={Scale} label={t('Bias AI', 'AI bias')} term="bias" value={`${signed(aAudit.bias, 2)}`} sub={`95% CI${ci('bias', v => signed(v, 2))}`} />
+        <Kpi icon={Sigma} label="QWK" term="qwk" value={dec(aAudit.qwk, 2)} sub={`95% CI${ci('qwk', v => dec(v, 2))}`} />
+        <Kpi icon={SlidersHorizontal} label={t('Kalibrasi aktif', 'Active calibration')} term="calibration" value={d.cal ? `#${d.cal.id}` : t('belum ada', 'none')} sub={d.cal ? dateTime(d.cal.created_at) : undefined} />
       </div>
 
       <div className="cols-even">

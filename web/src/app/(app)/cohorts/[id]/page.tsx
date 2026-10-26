@@ -8,6 +8,7 @@ import { ago, band, date, dec, num, pct, requestNow } from '@/lib/format'
 import { Badge, Card, Kpi, PageHead, Prob, ReadyBadge, Seg, SKILL_LABEL } from '@/components/ui'
 import { GapBars, StatusBar } from '@/components/charts'
 import { Term } from '@/components/Help'
+import { AlertTriangle, CalendarClock, Eye, TrendingUp, Users } from 'lucide-react'
 import { LinkPager } from '@/components/Pager'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -54,14 +55,28 @@ export default async function CohortPage({ params, searchParams }: {
       <Link href="/overview" className="back">← {t('Ringkasan', 'Overview')}</Link>
       <PageHead title={c.name} sub={`${c.institution} · ${t('target', 'target')} ${band(c.target_overall)}, ${t('tiap skill minimal', 'every skill at least')} ${band(c.target_min_skill)} · ${t('deadline', 'deadline')} ${date(c.deadline)} (${dec(weeksLeft, 1)} ${t('minggu', 'weeks')})`} />
       <div className="kpis">
-        <Kpi label={t('Learner', 'Learners')} value={num(all.length)} />
-        <Kpi label={t('Berisiko', 'At risk')} keyColor="var(--chart-bad)" value={num(counts.at_risk)} href={href({ f: 'at_risk', page: 1 })} on={f === 'at_risk'} />
-        <Kpi label={t('Perlu dipantau', 'Watch')} keyColor="var(--chart-warn)" value={num(counts.watch)} href={href({ f: 'watch', page: 1 })} on={f === 'watch'} />
-        <Kpi label={t('Sesuai jalur', 'On track')} keyColor="var(--chart-good)" value={num(counts.on_track)} href={href({ f: 'on_track', page: 1 })} on={f === 'on_track'} />
-        <Kpi label={t('Kapasitas coaching / minggu', 'Coaching slots / week')} term="capacity" value={num(cap)} />
+        <Kpi icon={Users} label={t('Learner', 'Learners')} value={num(all.length)} />
+        <Kpi icon={AlertTriangle} label={t('Berisiko', 'At risk')} value={num(counts.at_risk)} href={href({ f: 'at_risk', page: 1 })} on={f === 'at_risk'} />
+        <Kpi icon={Eye} label={t('Perlu dipantau', 'Watch')} value={num(counts.watch)} href={href({ f: 'watch', page: 1 })} on={f === 'watch'} />
+        <Kpi icon={TrendingUp} label={t('Sesuai jalur', 'On track')} value={num(counts.on_track)} href={href({ f: 'on_track', page: 1 })} on={f === 'on_track'} />
+        <Kpi icon={CalendarClock} label={t('Slot coaching / minggu', 'Coaching slots / week')} term="capacity" value={num(cap)} />
       </div>
 
-      <div className="cols-2">
+      <div className="cols-even" style={{ marginBottom: 20 }}>
+          <Card title={t('Status kohort', 'Cohort status')}><StatusBar c={counts} height={12} /></Card>
+          <Card title={t('Celah skill', 'Skill gaps')} sub={t(`Persentase learner yang level sekarang di bawah minimum ${band(min)}.`, `Share of learners whose level today is below the ${band(min)} minimum.`)}>
+            <GapBars rows={gaps.map(g => ({
+              label: SKILL_LABEL(g.k), value: g.share,
+              note: `${pct(g.share)} · ${num(g.binding)} ${t('penentu', 'binding')}`,
+              title: t(`${g.below} learner di bawah minimum; ${g.binding} learner yang belum aman terhambat skill ini`, `${g.below} learners below minimum; ${g.binding} not-yet-safe learners held back by this skill`),
+            }))} />
+            <p className="muted small" style={{ marginTop: 10 }}>
+              {t('Skill teratas: kandidat kelas kelompok.', 'Top skill: run a group class on it.')}
+            </p>
+          </Card>
+      </div>
+
+      <div>
         <Card pad={false}
           title={f === 'priority' ? t('Antrean intervensi minggu ini', "This week's intervention queue") : t('Learner', 'Learners')}
           sub={f === 'priority'
@@ -97,7 +112,7 @@ export default async function CohortPage({ params, searchParams }: {
                     <tr key={r.id} className={f === 'priority' && rank === cap + 1 ? 'cap' : undefined}>
                       <td className="num muted">{rank}</td>
                       <td>
-                        <Link className="row-link" href={`/learners/${r.id}`}>{r.display_name}</Link>
+                        <Link className="row-link nowrap" href={`/learners/${r.id}`}>{r.display_name}</Link>
                         <div className="row" style={{ gap: 4, marginTop: 2 }}>
                           {r.is_minor && <Badge tone="low">{t('di bawah 18', 'under 18')}</Badge>}
                           {!r.ai_consent && <Badge tone="warn" title={t('Tanpa persetujuan AI feedback', 'No AI-feedback consent')}>{t('tanpa izin AI', 'no AI consent')}</Badge>}
@@ -106,11 +121,11 @@ export default async function CohortPage({ params, searchParams }: {
                       </td>
                       <td><ReadyBadge status={r.status} /></td>
                       <td><Prob p={r.p_target} /></td>
-                      <td>{r.binding ? <>{SKILL_LABEL(r.binding)} <span className="muted small">{band(b?.level)}</span></> : <span className="muted">-</span>}</td>
+                      <td className="nowrap">{r.binding ? <>{SKILL_LABEL(r.binding)} <span className="muted small">{band(b?.level)}</span></> : <span className="muted">-</span>}</td>
                       <td className="num hide-xs">{need == null || !Number.isFinite(need) ? '-' : (
                         <span className="pill-pace"><span className={behind ? 'pace-bad' : 'pace-ok'}>{need <= 0 ? t('sudah', 'met') : `+${need.toFixed(2)}`}</span>
                           <span className="muted small">/ {pace == null ? '-' : `${pace >= 0 ? '+' : ''}${pace.toFixed(2)}`}</span></span>)}</td>
-                      <td className="hide-xs">{r.last_activity ? ago(r.last_activity) : <span className="muted">{t('belum pernah', 'never')}</span>}</td>
+                      <td className="hide-xs nowrap">{r.last_activity ? ago(r.last_activity) : <span className="muted">{t('belum pernah', 'never')}</span>}</td>
                     </tr>
                   )
                 })}
@@ -121,19 +136,6 @@ export default async function CohortPage({ params, searchParams }: {
           <LinkPager page={page} total={rows.length} size={per} href={p => href({ page: p })} perHref={p => href({ per: p, page: 1 })} />
         </Card>
 
-        <div className="stack-16">
-          <Card title={t('Status kohort', 'Cohort status')}><StatusBar c={counts} height={12} /></Card>
-          <Card title={t('Celah skill', 'Skill gaps')} sub={t(`Persentase learner yang level sekarang di bawah minimum ${band(min)}.`, `Share of learners whose level today is below the ${band(min)} minimum.`)}>
-            <GapBars rows={gaps.map(g => ({
-              label: SKILL_LABEL(g.k), value: g.share,
-              note: `${pct(g.share)} · ${num(g.binding)} ${t('penentu', 'binding')}`,
-              title: t(`${g.below} learner di bawah minimum; ${g.binding} learner yang belum aman terhambat skill ini`, `${g.below} learners below minimum; ${g.binding} not-yet-safe learners held back by this skill`),
-            }))} />
-            <p className="muted small" style={{ marginTop: 10 }}>
-              {t('Skill teratas: kandidat kelas kelompok.', 'Top skill: run a group class on it.')}
-            </p>
-          </Card>
-        </div>
       </div>
     </>
   )

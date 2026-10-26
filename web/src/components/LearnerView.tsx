@@ -98,12 +98,12 @@ export async function LearnerView({ me, id, self }: { me: Me; id: number; self?:
         <Card title={t('Esai', 'Essays')} sub={t('Skor AI; sebagian dicek guru.', 'AI scores; some checked by a teacher.')} pad={false}>
           <div className="table-wrap">
             <table className="data">
-              <thead><tr><th>{t('Dikirim', 'Submitted')}</th><th>{t('Soal', 'Prompt')}</th><th className="num">AI</th><th className="num">{t('Guru', 'Teacher')}</th><th>{t('Catatan', 'Notes')}</th></tr></thead>
+              <thead><tr><th>{t('Dikirim', 'Submitted')}</th><th className="hide-xs">{t('Soal', 'Prompt')}</th><th className="num">AI</th><th className="num">{t('Guru', 'Teacher')}</th><th>{t('Catatan', 'Notes')}</th></tr></thead>
               <tbody>
                 {essays.slice(0, 15).map(e => (
                   <tr key={e.id}>
                     <td style={{ whiteSpace: 'nowrap' }}><Link className="row-link" href={`/essays/${e.id}`}>{date(e.submitted_at)}</Link></td>
-                    <td className="muted clip" title={e.prompt}>{e.prompt}…</td>
+                    <td className="muted clip hide-xs" title={e.prompt}>{e.prompt}…</td>
                     <td className="num">{e.status === 'scored' ? <><b>{band(e.overall)}</b> <span className="muted small">{band(e.lo80)}-{band(e.hi80)}</span></> : <Status tone="neutral">{e.status === 'queued' ? t('antre', 'queued') : t('gagal', 'failed')}</Status>}</td>
                     <td className="num">{e.teacher != null ? band(e.teacher) : <span className="muted">-</span>}</td>
                     <td>{(e.flags ?? []).length > 0 && <Badge tone="warn">{t('perlu dicek', 'check')}</Badge>} {e.purged_at && <Badge tone="neutral">{t('teks dihapus', 'text purged')}</Badge>}</td>
@@ -129,7 +129,7 @@ export async function LearnerView({ me, id, self }: { me: Me; id: number; self?:
             <Card title={t('Data & persetujuan', 'Data & consent')}>
               <ul className="divided" style={{ marginBottom: 12 }}>
                 {consents.length ? consents.map((c, i) => (
-                  <li key={i} className="row between"><span>{c.scope.replace(/_/g, ' ')} <span className="muted small">{c.kind === 'guardian' ? t('oleh wali', 'by guardian') : t('oleh learner', 'by learner')}</span></span>
+                  <li key={i} className="row between"><span>{({ ai_feedback: t('AI feedback', 'AI feedback'), share_with_institution: t('Berbagi ke institusi', 'Share with institution'), audio_retention: t('Simpan audio', 'Keep audio') } as Record<string, string>)[c.scope] ?? c.scope} <span className="muted small">{c.kind === 'guardian' ? t('oleh wali', 'by guardian') : t('oleh learner', 'by learner')}</span></span>
                     <span className="muted small">{c.revoked_at ? `${t('dicabut', 'revoked')} ${date(c.revoked_at)}` : date(c.granted_at)}</span></li>
                 )) : <li className="muted">{t('Belum ada persetujuan tercatat.', 'No consent on record.')}</li>}
               </ul>

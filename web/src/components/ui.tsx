@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import type { ReactNode } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import { InfoTip, type TermKey } from './Help'
 import { tr } from '@/lib/i18n'
 import { band, pct } from '@/lib/format'
@@ -45,16 +45,19 @@ export function Card({ title, sub, right, children, pad = true, className, id }:
   )
 }
 
-export function Kpi({ label, value, sub, tone, keyColor, term, help, href, on }: {
+// KPI in the Statistics-card pattern (ReUI on 21st.dev): icon chip + label, big number with an optional delta badge.
+export function Kpi({ label, value, sub, tone, keyColor, term, help, href, on, icon: Icon, delta }: {
   label: string; value: ReactNode; sub?: ReactNode; tone?: 'bad'; keyColor?: string; term?: TermKey; help?: string; href?: string; on?: boolean
+  icon?: ComponentType<{ size?: number; strokeWidth?: number }>; delta?: { text: string; tone: 'good' | 'bad' | 'neutral' }
 }) {
   const body = (
     <>
       <div className="label">
+        {Icon && <span className="ico" aria-hidden><Icon size={16} strokeWidth={1.8} /></span>}
         {keyColor && <span className="key" style={{ background: keyColor }} aria-hidden />}
         <span>{label}</span>{(term || help) && <InfoTip k={term} text={help} />}
       </div>
-      <div className={cx('value', tone)}>{value}</div>
+      <div className={cx('value', tone)}>{value}{delta && <span className={`delta ${delta.tone}`}>{delta.text}</span>}</div>
       {sub && <div className="sub">{sub}</div>}
     </>
   )

@@ -4,6 +4,7 @@ import { getT } from '@/lib/i18n-server'
 import { LoginForm } from './LoginForm'
 import { LangToggle } from '@/components/Lang'
 import { Mark } from '@/components/Shell'
+import { FeatureCard } from '@/components/ui/feature-card'
 
 export const metadata = { title: 'Sign in · Altimeter' }
 
@@ -15,14 +16,17 @@ export default async function Login() {
       <div className="login-hero">
         <div className="login-top"><LangToggle /></div>
         <div className="alt-hero">
-          <div className="alt-hero-mark"><Mark size={44} /></div>
+          <div className="alt-hero-mark"><Mark size={26} /></div>
           <h1>Altimeter</h1>
           <p className="lead">{t('Siapa yang akan lulus target, siapa yang dibantu minggu ini, dan seberapa akurat skor AI.', 'Who will hit their target, who needs help this week, and how accurate the AI scores are.')}</p>
-          <ul className="alt-hero-points">
-            <li><b>{t('Kesiapan', 'Readiness')}</b> {t('per learner', 'per learner')}</li>
-            <li><b>{t('Kepercayaan skor', 'Score trust')}</b> {t('AI vs guru vs tes resmi', 'AI vs teacher vs official')}</li>
-            <li><b>{t('Privasi', 'Privacy')}</b> {t('izin wali, hapus otomatis', 'guardian consent, auto-delete')}</li>
-          </ul>
+          <div className="feature-row">
+            <FeatureCard src="/img/cohort.jpg" alt={t('Kelompok mahasiswa belajar dengan laptop', 'Students studying together with laptops')}
+              title={t('Siapa lulus 6,5 sebelum 14 Des?', 'Who hits 6.5 by 14 Dec?')} text={t('Peluang per learner, dengan alasannya.', 'Chance per learner, with the reason.')} label={t('Kesiapan', 'Readiness')} />
+            <FeatureCard src="/img/writing.jpg" alt={t('Tangan menulis esai di kertas', 'A hand writing an essay on paper')}
+              title={t('Skor AI dicek guru & tes resmi', 'AI scores checked by teachers & official tests')} text={t('Akurasi terukur, lalu dikoreksi.', 'Measured, then corrected.')} label={t('Kepercayaan skor', 'Score trust')} />
+            <FeatureCard src="/img/learner.jpg" alt={t('Learner belajar dengan headphone', 'A learner studying with headphones')}
+              title={t('Data anak aman', "Minors' data stays safe")} text={t('Izin wali, hapus otomatis.', 'Guardian consent, auto-delete.')} label={t('Privasi', 'Privacy')} />
+          </div>
         </div>
       </div>
       <div className="login-form">

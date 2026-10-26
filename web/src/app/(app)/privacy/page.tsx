@@ -5,6 +5,7 @@ import { getT, titled } from '@/lib/i18n-server'
 import { date, dateTime, num, pct } from '@/lib/format'
 import { Badge, Card, Kpi, PageHead } from '@/components/ui'
 import { ActionButton } from '@/components/Action'
+import { Baby, BotOff, FileClock, Trash2 } from 'lucide-react'
 
 export const generateMetadata = titled('Privasi & data', 'Privacy & data')
 
@@ -37,10 +38,10 @@ export default async function Privacy() {
     <>
       <PageHead title={t('Privasi & data', 'Privacy & data')} sub={t('Aturan data yang ditegakkan sistem.', 'Data rules the system enforces.')} />
       <div className="kpis">
-        <Kpi label={t('Learner di bawah 18', 'Learners under 18')} value={num(d.c.minors)} sub={`${pct(d.c.minors ? d.c.minors_consent / d.c.minors : null)} ${t('dengan izin wali', 'with guardian consent')}`} />
-        <Kpi label={t('AI feedback diblokir', 'AI feedback blocked')} term="consent" value={num(d.c.no_consent)} sub={t('tanpa izin, esai tidak ke LLM', 'no consent, no essay to the LLM')} />
-        <Kpi label={t('Permintaan data terbuka', 'Open data requests')} value={num(d.dsr.filter(x => x.status === 'open').length)} />
-        <Kpi label={t('Purge terakhir', 'Last purge')} term="retention" value={d.runs[0] ? date(d.runs[0].ran_at) : '-'} sub={d.runs[0] ? `${d.runs[0].trigger}` : t('belum pernah', 'never')} />
+        <Kpi icon={Baby} label={t('Learner di bawah 18', 'Learners under 18')} value={num(d.c.minors)} sub={`${pct(d.c.minors ? d.c.minors_consent / d.c.minors : null)} ${t('dengan izin wali', 'with guardian consent')}`} />
+        <Kpi icon={BotOff} label={t('AI feedback diblokir', 'AI feedback blocked')} term="consent" value={num(d.c.no_consent)} sub={t('tanpa izin, esai tidak ke LLM', 'no consent, no essay to the LLM')} />
+        <Kpi icon={FileClock} label={t('Permintaan data terbuka', 'Open data requests')} value={num(d.dsr.filter(x => x.status === 'open').length)} />
+        <Kpi icon={Trash2} label={t('Purge terakhir', 'Last purge')} term="retention" value={d.runs[0] ? date(d.runs[0].ran_at) : '-'} sub={d.runs[0] ? `${d.runs[0].trigger}` : t('belum pernah', 'never')} />
       </div>
       <div className="cols-even">
         <Card title={t('Masa simpan', 'Retention')} right={me.role === 'platform' ? <ActionButton small url="/api/privacy/purge">{t('Jalankan purge sekarang', 'Run purge now')}</ActionButton> : undefined}

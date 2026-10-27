@@ -37,7 +37,7 @@ Measured on data the models never saw during training.
 
 ## How it is built
 
-<p align="center"><img src="docs/architecture.png" width="480" alt="How Altimeter is built: the partner app and the web dashboard write to Postgres, a job queue feeds workers that score essays and update forecasts, and the LLM is called only with consent"></p>
+<p align="center"><img src="docs/architecture-flow.png" width="480" alt="How Altimeter is built: the partner app and the web dashboard write to Postgres, a job queue feeds workers that score essays and update forecasts, and the LLM is called only with consent"></p>
 
 <sub>Diagram source: [docs/architecture.mmd](docs/architecture.mmd)</sub>
 

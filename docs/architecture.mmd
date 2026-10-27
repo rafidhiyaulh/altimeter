@@ -1,0 +1,9 @@
+flowchart LR
+  partner[Partner app] -->|signed API calls| api[Next.js API<br/>Vercel, Singapore]
+  staff[Teachers and admins] --> web[Web dashboard]
+  api --> db[(Postgres 17<br/>row-level security)]
+  web --> db
+  db -->|job queue| workers[Workers<br/>score essays,<br/>update forecasts]
+  cron[Scheduler<br/>every minute] --> workers
+  workers -->|results| db
+  workers -->|only with consent| llm[LLM<br/>feedback and reports]

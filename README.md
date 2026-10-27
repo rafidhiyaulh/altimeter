@@ -37,17 +37,9 @@ Measured on data the models never saw during training.
 
 ## How it is built
 
-```mermaid
-flowchart LR
-  partner["Partner app"] -- "signed API calls" --> api["Next.js API<br/>Vercel, Singapore"]
-  staff["Teachers and admins"] --> web["Web dashboard"]
-  web --> db[("Postgres 17<br/>row-level security")]
-  api --> db
-  db -- "job queue" --> workers["Workers<br/>score essays, update forecasts"]
-  cron["Scheduler, every minute"] --> workers
-  workers --> db
-  workers -- "only with consent" --> llm["LLM<br/>feedback and reports"]
-```
+![How Altimeter is built: the partner app and the web dashboard write to Postgres, a job queue feeds workers that score essays and update forecasts, and the LLM is called only with consent](docs/architecture.png)
+
+<sub>Diagram source: [docs/architecture.mmd](docs/architecture.mmd)</sub>
 
 | Area | What is in it |
 |---|---|
@@ -87,7 +79,7 @@ limits. CI runs secret scanning on the full history, a dependency audit and Code
 
 ```
 ml/              Python: corpus cleaning, writing model, human-rater check, synthetic cohorts
-docs/            screenshots and load-test results
+docs/            screenshots, architecture diagram and load-test results
 db/migrations/   schema, row-level security, runtime functions
 web/             Next.js app, partner API, workers, setup and test scripts
 ```

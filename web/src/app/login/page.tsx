@@ -16,7 +16,7 @@ export default async function Login() {
         <div className="login-top"><LangToggle /></div>
         <div className="alt-hero">
           <h1>Altimeter</h1>
-          <p className="lead">{t('Siapa yang akan lulus target, siapa yang dibantu minggu ini, dan seberapa akurat skor AI.', 'Who will hit their target, who needs help this week, and how accurate the AI scores are.')}</p>
+          <p className="hero-lead">{t('Siapa yang akan lulus target, siapa yang dibantu minggu ini, dan seberapa akurat skor AI.', 'Who will hit their target, who needs help this week, and how accurate the AI scores are.')}</p>
           <div className="feature-row">
             <FeatureCard src="/img/cohort.jpg" alt={t('Kelompok mahasiswa belajar dengan laptop', 'Students studying together with laptops')}
               title={t('Siapa lulus 6,5 sebelum 14 Des?', 'Who hits 6.5 by 14 Dec?')} text={t('Peluang per learner, dengan alasannya.', 'Chance per learner, with the reason.')} label={t('Kesiapan', 'Readiness')} />
@@ -30,7 +30,7 @@ export default async function Login() {
       <div className="login-form">
         <div className="login-box">
           <h2 className="page-title" style={{ marginBottom: 4 }}>{t('Masuk', 'Sign in')}</h2>
-          <p className="muted" style={{ marginBottom: 20 }}>{t('Pilih peran demo.', 'Pick a demo role.')}</p>
+          <p className="muted" style={{ marginBottom: 20 }}>{t('Pilih satu peran untuk mencoba. Tidak perlu akun.', 'Pick a role to try it. No account needed.')}</p>
           <LoginForm demo={process.env.ALT_DEMO_LOGIN !== '0'} />
         </div>
       </div>

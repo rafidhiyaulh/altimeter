@@ -3,8 +3,9 @@ import { asUser } from '@/lib/db'
 import { getT, titled } from '@/lib/i18n-server'
 import { agreement, bootstrap, crossTab, type Pair } from '@/lib/agreement'
 import { date, dec, num, pct, signed } from '@/lib/format'
-import { Card, CRIT_LABEL, Kpi, PageHead, SKILL_LABEL } from '@/components/ui'
-import { Matrix, Reliability, sourceLabel } from '@/components/charts'
+import { Card, CRIT_LABEL, Kpi, Lead, PageHead, SKILL_LABEL } from '@/components/ui'
+import { DiffBars, Matrix, Reliability, sourceLabel } from '@/components/charts'
+import { ChevronRight } from 'lucide-react'
 import { Term } from '@/components/Help'
 import { ActionButton } from '@/components/Action'
 import writingEval from '@/lib/evidence/writing_eval.json'
@@ -36,6 +37,16 @@ export default async function Trust() {
   const ci = bootstrap(P(audit))
   const L = agreement(P(low))
   const ct = crossTab(P(audit))
+  // How far the AI landed from the teacher, in half-band steps (AI minus teacher).
+  const steps = audit.map(r => Math.round((Number(r.ai) - Number(r.teacher)) * 2) / 2)
+  const share = (f: (x: number) => boolean) => { const k = steps.filter(f).length; return { n: k, share: steps.length ? k / steps.length : 0 } }
+  const diff = [
+    { label: t('AI 1 band atau lebih di bawah guru', 'AI 1 band or more below the teacher'), ...share(x => x <= -1) },
+    { label: t('AI setengah band di bawah', 'AI half a band below'), ...share(x => x === -0.5) },
+    { label: t('Sama persis dengan guru', 'Same as the teacher'), ...share(x => x === 0), key: true },
+    { label: t('AI setengah band di atas', 'AI half a band above'), ...share(x => x === 0.5) },
+    { label: t('AI 1 band atau lebih di atas guru', 'AI 1 band or more above the teacher'), ...share(x => x >= 1) },
+  ]
   const crit = (['tr', 'cc', 'lr', 'gra'] as const).map(k => ({ k, a: agreement(P(audit, `a_${k}`, `t_${k}`)) }))
 
   const groups = new Map<string, { n: number; d: number; ad: number }>()
@@ -59,8 +70,17 @@ export default async function Trust() {
       <PageHead title={t('Kepercayaan skor', 'Score trust')}
         sub={t('Bisakah skor AI dipercaya? Kami membandingkannya dengan nilai guru dan hasil IELTS resmi, lalu mengoreksinya.',
           'Can the AI scores be trusted? We compare them with teacher marks and real IELTS results, then correct them.')} />
+      {A.n > 0 && (
+        <Lead>
+          {t(`Skor AI umumnya bisa dipercaya: pada ${pct(A.withinHalf)} esai, selisihnya dengan guru paling banyak setengah band. `,
+            `AI scores are mostly reliable: on ${pct(A.withinHalf)} of essays they are within half a band of the teacher. `)}
+          {Math.abs(A.bias) < 0.05 ? t('AI tidak condong lebih tinggi atau lebih rendah.', 'The AI does not lean high or low.')
+            : A.bias > 0 ? t(`AI sedikit murah hati (rata-rata ${dec(A.bias, 2)} band lebih tinggi), dan semua perkiraan sudah dikoreksi untuk itu.`, `It is a little generous (${dec(A.bias, 2)} band higher on average), and every forecast already corrects for that.`)
+              : t(`AI sedikit pelit (rata-rata ${dec(-A.bias, 2)} band lebih rendah), dan semua perkiraan sudah dikoreksi untuk itu.`, `It is a little strict (${dec(-A.bias, 2)} band lower on average), and every forecast already corrects for that.`)}
+        </Lead>
+      )}
       <div className="kpis">
-        <Kpi label={t('Esai dicek guru', 'Essays checked by teachers')} term="audit" value={num(A.n)} sub={t('dipilih acak', 'picked at random')} />
+        <Kpi label={t('Esai dicek guru', 'Checked by teachers')} term="audit" value={num(A.n)} sub={t('dipilih acak', 'picked at random')} />
         <Kpi label={t('AI selisih ≤ 0,5 band', 'AI within 0.5 band')} term="within_half" value={pct(A.withinHalf)}
           sub={ci ? t(`kemungkinan ${pct(ci.withinHalf[0])} sampai ${pct(ci.withinHalf[1])}`, `likely ${pct(ci.withinHalf[0])} to ${pct(ci.withinHalf[1])}`) : undefined} />
         <Kpi label={t('AI dibanding guru', 'AI compared with teachers')} term="bias" value={`${signed(A.bias, 2)} band`} sub={highLow(A.bias)} />
@@ -69,12 +89,21 @@ export default async function Trust() {
       </div>
 
       <Card title={t('AI dibanding guru', 'AI compared with teachers')}
-        sub={t('Guru menilai ulang esai pilihan acak tanpa melihat skor AI. Kotak di garis diagonal berarti skornya sama.',
-          'Teachers re-mark randomly picked essays without seeing the AI score. Squares on the diagonal mean the same score.')}>
+        sub={t('Guru menilai ulang esai yang dipilih acak, tanpa melihat skor AI.',
+          'Teachers re-mark randomly picked essays without seeing the AI score.')}>
         <div className="cols-even" style={{ alignItems: 'start' }}>
           <div>
-            <div className="subhead" style={{ marginBottom: 8 }}>{t('Baris: skor AI. Kolom: nilai guru.', 'Rows: AI score. Columns: teacher mark.')}</div>
-            {A.n > 0 ? <Matrix rows={ct.bands} cols={ct.bands} get={ct.get} rowLabel="AI" colLabel={t('Guru', 'Teacher')} /> : <p className="muted">-</p>}
+            <div className="subhead" style={{ marginBottom: 10 }}>{t('Seberapa jauh skor AI dari nilai guru', 'How far the AI score was from the teacher')}</div>
+            {A.n > 0 ? <DiffBars rows={diff} /> : <p className="muted">-</p>}
+            {A.n > 0 && (
+              <details className="tech" style={{ marginTop: 14 }}>
+                <summary><ChevronRight size={14} aria-hidden />{t('Lihat semua pasangan skor', 'See every score pair')}</summary>
+                <div style={{ marginTop: 10 }}>
+                  <div className="muted small" style={{ marginBottom: 8 }}>{t('Baris: skor AI. Kolom: nilai guru. Kotak di diagonal berarti sama.', 'Rows: AI score. Columns: teacher mark. Squares on the diagonal mean the same score.')}</div>
+                  <Matrix rows={ct.bands} cols={ct.bands} get={ct.get} rowLabel="AI" colLabel={t('Guru', 'Teacher')} />
+                </div>
+              </details>
+            )}
           </div>
           <div className="table-wrap">
             <table className="data">
@@ -147,7 +176,7 @@ export default async function Trust() {
         </div>
         <Card title={t('Uji perkiraan kesiapan', 'Readiness forecast test')} sub={t('Learner contoh, esai dan model asli.', 'Sample learners, real essays and model.')} pad={false}>
           <table className="data" style={{ marginTop: 4 }}>
-            <thead><tr><th>Writing</th><th className="num">{t('Rata-rata selisih', 'Average gap')}</th><th className="num">{t('Selisih ≤ 0,5', 'Within 0.5')}</th></tr></thead>
+            <thead><tr><th>{t('Perkiraan writing', 'Writing forecast')}</th><th className="num">{t('Rata-rata selisih', 'Average gap')}</th><th className="num">{t('Selisih ≤ 0,5', 'Within 0.5')}</th></tr></thead>
             <tbody>
               <tr><td>{t('Tanpa koreksi', 'Without correction')}</td><td className="num">{dec(bt.half_1_without_calibration.writing.mae, 2)}</td><td className="num">{pct(bt.half_1_without_calibration.writing.within_half)}</td></tr>
               <tr><td className="strong">{t('Dengan koreksi', 'With correction')}</td><td className="num">{dec(bt.half_1_with_calibration.writing.mae, 2)}</td><td className="num">{pct(bt.half_1_with_calibration.writing.within_half)}</td></tr>

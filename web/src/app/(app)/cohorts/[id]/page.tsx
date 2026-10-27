@@ -6,7 +6,7 @@ import { asUser, n } from '@/lib/db'
 import { getT } from '@/lib/i18n-server'
 import { learners, skillOf } from '@/lib/queries'
 import { ago, band, date, num, pct, requestNow } from '@/lib/format'
-import { Badge, Card, Kpi, Meta, PageHead, Prob, ReadyBadge, SKILL_LABEL } from '@/components/ui'
+import { Badge, Card, Kpi, Lead, Meta, PageHead, Prob, ReadyBadge, SKILL_LABEL } from '@/components/ui'
 import { Term } from '@/components/Help'
 import { LinkPager } from '@/components/Pager'
 
@@ -63,8 +63,18 @@ export default async function CohortPage({ params, searchParams }: {
         <>{t('Deadline', 'Deadline')} <b>{date(c.deadline)}</b> ({t(`${weeksLeft} minggu lagi`, `${weeksLeft} weeks left`)})</>,
       ]} />} />
 
+      {all.length > 0 && (
+        <Lead>
+          {counts.at_risk + counts.watch === 0
+            ? t('Tidak ada learner yang berisiko minggu ini.', 'No learner is at risk this week.')
+            : t(`${num(counts.at_risk + counts.watch)} learner perlu dibantu. Mulai dari ${Math.min(cap, counts.at_risk + counts.watch)} nama teratas: mereka paling mungkin terbantu oleh coaching minggu ini.`,
+              `${num(counts.at_risk + counts.watch)} learners need help. Start with the top ${Math.min(cap, counts.at_risk + counts.watch)}: coaching this week is most likely to help them.`)}
+          {gaps[0]?.below > 0 && t(` ${SKILL_LABEL(gaps[0].k)} paling sering tertinggal (${pct(gaps[0].share)}), cocok untuk kelas kelompok.`,
+            ` ${SKILL_LABEL(gaps[0].k)} is behind most often (${pct(gaps[0].share)}), so it suits a group class.`)}
+        </Lead>
+      )}
       <div className="kpis">
-        <Kpi label={t('Perlu dibantu', 'Need help')} value={num(counts.at_risk + counts.watch)} sub={t('berisiko atau perlu dipantau', 'at risk or to watch')} href={href({ f: 'priority', page: 1 })} on={f === 'priority'} />
+        <Kpi label={t('Perlu dibantu', 'Need help')} value={num(counts.at_risk + counts.watch)} sub={t('klik angka untuk menyaring', 'click a number to filter')} href={href({ f: 'priority', page: 1 })} on={f === 'priority'} />
         <Kpi label={t('Berisiko tidak lulus', 'At risk of missing')} value={num(counts.at_risk)} href={href({ f: 'at_risk', page: 1 })} on={f === 'at_risk'} />
         <Kpi label={t('Perlu dipantau', 'To watch')} value={num(counts.watch)} href={href({ f: 'watch', page: 1 })} on={f === 'watch'} />
         <Kpi label={t('Sesuai jalur', 'On track')} value={num(counts.on_track)} href={href({ f: 'on_track', page: 1 })} on={f === 'on_track'} />
@@ -97,7 +107,7 @@ export default async function CohortPage({ params, searchParams }: {
               <th><Term k="p_target">{t('Peluang lulus', 'Chance to pass')}</Term></th>
               <th><Term k="binding">{t('Skill paling lemah', 'Weakest skill')}</Term></th>
               <th className="num hide-xs"><Term k="pace">{t('Perlu naik / minggu', 'Needed gain / week')}</Term></th>
-              <th className="num hide-xs">{t('Laju sekarang', 'Current pace')}</th>
+              <th className="num hide-xs">{t('Naik sekarang / minggu', 'Gaining now / week')}</th>
               <th className="hide-xs">{t('Latihan terakhir', 'Last practice')}</th>
             </tr></thead>
             <tbody>

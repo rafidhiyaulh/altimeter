@@ -196,3 +196,20 @@ export function GapBars({ rows }: { rows: { label: string; value: number; note: 
     </ul>
   )
 }
+
+// How far one score was from another, in half-band steps, as plain horizontal bars. The "same score" row
+// carries the accent; every other row is neutral so the eye lands on agreement first.
+export function DiffBars({ rows }: { rows: { label: string; n: number; share: number; key?: boolean }[] }) {
+  const max = Math.max(0.0001, ...rows.map(r => r.share))
+  return (
+    <ul className="hbars">
+      {rows.map(r => (
+        <li key={r.label} className={r.key ? 'key' : undefined} title={`${r.label}: ${pct(r.share)} (${r.n})`}>
+          <span className="hb-label">{r.label}</span>
+          <span className="hb-track"><span className="hb-fill" style={{ width: `${(r.share / max) * 100}%` }} /></span>
+          <span className="hb-val">{pct(r.share)}<span className="muted"> ({r.n})</span></span>
+        </li>
+      ))}
+    </ul>
+  )
+}

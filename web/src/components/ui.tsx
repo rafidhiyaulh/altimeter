@@ -66,6 +66,16 @@ export function Kpi({ label, value, sub, tone, keyColor, term, help, href, on, d
     : <div className="kpi">{body}</div>
 }
 
+// The page's answer in one plain sentence, for readers who only look at the top. An optional next step on the right.
+export function Lead({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  return (
+    <section className="lead" aria-label="Summary">
+      <p>{children}</p>
+      {action && <div className="lead-action">{action}</div>}
+    </section>
+  )
+}
+
 // A line of facts about the page subject, separated by space only (no dots or bars between them).
 export function Meta({ items }: { items: (ReactNode | null | false | undefined)[] }) {
   return <div className="meta">{items.filter(Boolean).map((x, i) => <span key={i}>{x}</span>)}</div>

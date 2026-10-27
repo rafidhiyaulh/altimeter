@@ -28,7 +28,7 @@ export function LoginForm({ demo }: { demo: boolean }) {
           ))}
         </div>
       )}
-      <div className="hr" />
+      {demo && <div className="login-or">{t('atau masuk dengan email', 'or sign in with email')}</div>}
       <label className="field"><span>Email</span><input className="input" style={{ width: '100%' }} name="email" type="email" autoComplete="username" /></label>
       <label className="field"><span>{t('Kata sandi', 'Password')}</span><input className="input" style={{ width: '100%' }} name="password" type="password" autoComplete="current-password" /></label>
       <button className="btn btn-primary btn-block" disabled={pending} type="submit">{pending ? t('Masuk...', 'Signing in...') : t('Masuk', 'Sign in')}</button>

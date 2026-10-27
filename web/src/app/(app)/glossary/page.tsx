@@ -15,11 +15,11 @@ const GROUPS: { title: [string, string]; keys: (keyof typeof GLOSSARY)[] }[] = [
 const NAMES: Record<string, [string, string]> = {
   readiness: ['Kesiapan', 'Readiness'], p_target: ['Peluang lulus', 'Chance to pass'], binding: ['Skill paling lemah', 'Weakest skill'],
   pace: ['Perlu naik per minggu', 'Needed gain per week'], priority: ['Urutan bantuan', 'Who to help first'], capacity: ['Slot coaching', 'Coaching slots'],
-  kalman: ['Filter Kalman', 'Kalman filter'], interval: ['Rentang kemungkinan', 'Likely range'], calibration: ['Koreksi', 'Correction'], audit: ['Cek acak', 'Random check'],
-  qwk: ['Skor kesepakatan (QWK)', 'Agreement score (QWK)'], within_half: ['AI sesuai guru', 'AI matches teachers'], bias: ['AI terlalu tinggi/rendah', 'AI too high or low'], drivers: ['Mengapa band ini', 'Why this band'],
+  kalman: ['Pelacak level (Kalman)', 'Level tracker (Kalman)'], interval: ['Rentang kemungkinan', 'Likely range'], calibration: ['Koreksi', 'Correction'], audit: ['Cek acak', 'Random check'],
+  qwk: ['Skor kesepakatan (QWK)', 'Agreement score (QWK)'], within_half: ['AI dekat dengan guru', 'AI close to teachers'], bias: ['AI terlalu tinggi/rendah', 'AI too high or low'], drivers: ['Mengapa band ini', 'Why this band'],
   flags: ['Perlu dicek manusia', 'Needs a human look'], grounded: ['Kutipan dicek', 'Checked quotes'], consent: ['Izin AI feedback', 'AI feedback consent'],
   retention: ['Penghapusan otomatis', 'Automatic deletion'], ledger: ['Catatan permanen', 'Permanent record'], bitemporal: ['Riwayat versi skor', 'Score version history'],
-  rls: ['Akses per institusi (RLS)', 'Per-school access (RLS)'], dlq: ['Job gagal (DLQ)', 'Failed jobs (DLQ)'], brier: ['Brier score', 'Brier score'],
+  rls: ['Akses per institusi (RLS)', 'Per-school access (RLS)'], dlq: ['Job gagal (DLQ)', 'Failed jobs (DLQ)'], brier: ['Ketepatan peluang (Brier)', 'How good the chances are (Brier)'],
 }
 
 export default async function Glossary() {

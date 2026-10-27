@@ -166,7 +166,6 @@ export default async function Trust() {
                 <tr><td className="muted">{t('Pembanding: selalu menebak rata-rata', 'Baseline: always guess the average')}</td><td className="num muted">{dec(we.overall.baseline_mean.mae, 2)}</td><td className="num muted">{pct(we.overall.baseline_mean.within_half)}</td></tr>
               </tbody>
             </table>
-            <div className="table-foot">{t(`Dari ${num(we.prep.raw_rows)} baris data publik, ${num(we.prep.rows_kept)} esai unik tersisa setelah duplikat dibuang.`, `From ${num(we.prep.raw_rows)} public rows, ${num(we.prep.rows_kept)} unique essays remained after removing duplicates.`)}</div>
           </Card>
           <Card title={t('Dibandingkan dengan penilai manusia', 'Compared with human raters')} sub="ELLIPSE corpus (Crossley et al., 2023)">
             <div className="row" style={{ alignItems: 'baseline', gap: 10 }}><span className="big-p" style={{ fontSize: 28 }}>{dec(ellipse.spearman_model_vs_human, 2)}</span>

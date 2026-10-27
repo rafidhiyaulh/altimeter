@@ -38,7 +38,7 @@ export default async function About() {
             <div><div className="k">{t('Esai asli', 'Real essays')}</div><div className="v">2.224</div></div>
             <div><div className="k">{t('Learner sintetis', 'Synthetic learners')}</div><div className="v">450</div></div>
             <div><div className="k">{t('Tes otomatis di server live', 'Automated tests on the live site')}</div><div className="v">54/54</div></div>
-            <div><div className="k">{t('Model Python sama dengan app', 'Python model matches the app')}</div><div className="v">&lt; 1e-9</div></div>
+            <div><div className="k">{t('Skor writing dalam ±0,5 band', 'Writing scores within ±0.5 band')}</div><div className="v">82%</div></div>
           </div>
         </Card>
       </div>

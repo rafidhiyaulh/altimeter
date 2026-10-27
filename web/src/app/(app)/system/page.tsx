@@ -60,7 +60,7 @@ export default async function System() {
         [t('Panggilan LLM / sukses', 'LLM calls / ok'), `${num(s.llm_calls)} / ${pct(s.llm_ok == null ? null : Number(s.llm_ok))}`], [t('Butir tak ber-grounding dibuang', 'Ungrounded items dropped'), num(s.llm_dropped)]] },
     { tech: 'Cloud + deployment', title: t('Server di Singapura', 'Servers in Singapore'),
       body: t('Aplikasi dan database di Singapura, dekat dengan pengguna Indonesia. Bisa juga dijalankan sendiri dengan Docker.', 'App and database in Singapore, close to Indonesian users. Can also run anywhere with Docker.'),
-      facts: [[t('Region', 'Region'), process.env.VERCEL_REGION ?? 'local'], ['Commit', process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? '-'], ['Health', '/api/health']] },
+      facts: [[t('Region', 'Region'), process.env.VERCEL_REGION === 'sin1' ? t('Singapura', 'Singapore') : (process.env.VERCEL_REGION ?? t('lokal', 'local'))], ['Health', '/api/health']] },
     { tech: 'Security / networking', title: t('Data anak dilindungi', 'Children\'s data protected'),
       body: t('Tiap institusi hanya melihat datanya sendiri, dicek langsung di database. Esai anak tidak ke AI tanpa izin wali.', 'Each school sees only its own data, enforced in the database. A minor\'s essay never goes to AI without guardian consent.'),
       facts: [[t('Baris audit', 'Audit rows'), num(s.audit_rows)], [t('Review di ledger', 'Reviews in ledger'), num(s.reviews)]] },

@@ -1,11 +1,12 @@
 // UAT: clicks through the real user flows of each demo role in a browser, like a person would.
-// usage: node scripts/uat.mjs <base> <outdir>
+// usage: node --env-file=../.env.local scripts/uat.mjs <base> <outdir>
 import { chromium } from 'playwright-core'
 import { lit, runSql } from './lib/dbq.mjs'
 
 const [base = 'http://localhost:3011', out = '/tmp'] = process.argv.slice(2)
 const results = []
 const created = [] // essays written during the run, removed at the end so the demo learner stays clean
+const started = new Date().toISOString()
 const check = (name, ok, info = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${info ? `  (${info})` : ''}`) }
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
 
@@ -55,7 +56,7 @@ await session('admin', async page => {
   for (let i = 0; i < 4; i++) await selects.nth(i).selectOption('6.0')
   await page.getByRole('button', { name: 'Save marks' }).click()
   await page.getByText('Writing model score').waitFor({ timeout: 30000 })
-  check('admin: after saving, the AI score and the history appear', await page.getByText('History').isVisible())
+  check('admin: after saving, the AI score and the history appear', await visible(page.getByText('History', { exact: true })))
   await shot(page, 'admin-after-review')
 
   // AI feedback on a consented essay, then the weekly report.
@@ -116,14 +117,14 @@ await session('learner', async page => {
 
 await session('platform', async page => {
   await page.goto(base + '/system')
+  await page.locator('input[aria-label=label]').fill('UAT key')
   await page.getByRole('button', { name: 'Create key' }).click()
   await page.locator('.key-once').waitFor({ timeout: 30000 })
   check('platform: API key shown once', (await page.locator('.key-once').innerText()).startsWith('alt_live_'))
-  const revoke = page.getByRole('button', { name: 'Revoke' }).first()
-  await revoke.click()
-  await page.getByRole('button', { name: 'Revoke this key?' }).click()
-  await page.getByText('No active keys.').or(page.getByText(/revoked keys/)).first().waitFor({ timeout: 30000 })
-  check('platform: API key revoked', true)
+  const row = page.locator('tr', { hasText: 'UAT key' })
+  await row.getByRole('button', { name: 'Revoke' }).click()
+  await row.getByRole('button', { name: 'Revoke this key?' }).click()
+  check('platform: API key revoked', await visible(page.getByText(/revoked keys? can no longer be used/)))
 
   await page.locator('input[aria-label=n]').fill('20')
   await page.getByRole('button', { name: 'Re-score batch (load test)' }).click()
@@ -151,6 +152,8 @@ if (created.length) {
   runSql(`begin; delete from alt.attempts where essay_id in (${ids}); delete from alt.essays where id in (${ids});
     select alt.enqueue_readiness(id) from alt.students where user_id is not null; commit;`)
 }
+// the API key the run created
+runSql(`delete from alt.api_keys where created_at >= ${lit(started)}`)
 const passed = results.filter(Boolean).length
 console.log(`\n${passed}/${results.length} passed`)
 process.exit(passed === results.length ? 0 : 1)

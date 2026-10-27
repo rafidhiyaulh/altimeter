@@ -73,7 +73,7 @@ const prompts = Object.entries(synth.prompts).map(([key, body], k) => ({ id: k +
 const promptId = new Map(prompts.map(p => [p.key, p.id]))
 for (const [n, part] of chunks(prompts, 700_000).entries()) emit(`prompts_${n}`, `
 insert into alt.prompts (id, body, question_type, source, body_sha256)
-select id, body, qt, 'btnotpt/ielts_task_2 (Apache-2.0)', sha from jsonb_to_recordset(${payload(part.map(({ key, ...p }) => p))})
+select id, body, qt, 'btnotpt/ielts_task_2 (Apache-2.0)', sha from jsonb_to_recordset(${payload(part.map(r => { const p = { ...r }; delete p.key; return p }))})
   as x(id int, body text, qt text, sha text) on conflict (body_sha256) do nothing;
 select setval(pg_get_serial_sequence('alt.prompts', 'id'), (select max(id) from alt.prompts));
 `)

@@ -1,55 +1,80 @@
 # Altimeter
 
-**Readiness and score trust for English test-prep institutions.** A concept built for Acsent's B2B side.
+**A dashboard that tells an English test-prep school who will reach their IELTS target on time, who needs help this week, and how far the AI scores can be trusted.**
 
-**Live:** https://altimeter-readiness.vercel.app (one-click demo: Acsent team, institution admin, learner)
+**Live demo:** https://altimeter-readiness.vercel.app (pick a role, no account needed)
 
-It answers three questions a school, university or scholarship programme asks before buying:
+![Overview](docs/overview.png)
 
-1. **Who will hit the target band by the deadline**, and who should get this week's coaching slots?
-2. **How accurate are the AI scores**, measured against teachers and official results?
-3. **Is children's data safe**: guardian consent, retention, erasure?
+## What it answers
 
-> Synthetic institutions, learners, teacher marks and official results. The 2,224 essay texts are real learner essays from a public corpus (Apache-2.0), scored by the real model through the real queue. No Acsent data is used.
+| Question a school asks | What Altimeter shows |
+|---|---|
+| Who will hit the target band by the deadline? | Each learner's chance to pass, the skill holding them back, and a weekly list of who to coach first |
+| Can we trust the AI scores? | Teachers re-mark a random 1 in 10 essays without seeing the AI score. Practice scores are compared with real IELTS results, and every forecast is corrected for the gap |
+| Is children's data safe? | Guardian consent before any essay goes to AI, automatic deletion, export and erasure on request, and each school sees only its own data |
+
+| Cohort: who to help this week | Score trust: how close the AI is to teachers |
+|---|---|
+| ![Cohort](docs/cohort.png) | ![Score trust](docs/trust.png) |
 
 ## Results
 
-| | |
+Measured on data the models never saw during training.
+
+| What was tested | Result |
 |---|---|
-| Writing model, prompts never seen in training | MAE 0.45 band, 82% within ±0.5, QWK 0.54 (mean baseline 0.59 / 60% / 0) |
-| External check vs **human** raters (ELLIPSE, 3,911 essays) | Spearman 0.39 (essay length alone 0.24) |
-| TypeScript serving vs Python training | max difference < 1e-9 on 300 essays |
-| Readiness backtest, writing, with calibration | MAE 0.63 → 0.47, within ±0.5 62% → 81% |
-| Chance of reaching the target, 4 weeks ahead | Brier 0.070 → 0.054 with calibration |
-| System integration test against production | 54/54 |
+| Writing scorer on new essay prompts | Average gap 0.45 band; 82% of essays within half a band (always guessing the average: 0.59 and 60%) |
+| Writing scorer against human raters (ELLIPSE corpus, 3,911 essays) | Rank agreement 0.39 (essay length alone: 0.24). Moderate, which is why teacher checks and correction are built in |
+| Readiness forecast for writing, with correction from real results | Average gap 0.63 → 0.47 band; within half a band 62% → 81% |
+| "Chance to pass", 4 weeks before the test | Brier score 0.070 → 0.054 with correction (lower is better) |
+| Live system tests | 54 integration checks and 24 browser flows pass against production |
 
-Honesty notes: the public corpus had 4,234 duplicate essays and ~1,000 prompts leaking between its train and test splits (fixed by de-duplicating and re-splitting by prompt). Its labels look machine-made (no 7.5 band; 14% of essays at 8.0 on every criterion), which is exactly why the teacher audit and calibration exist.
+**About the data.** The schools, learners, teacher marks and official results are synthetic. The 2,224 essays are real learner essays from a public corpus (Apache-2.0), scored by the real model through the real queue. Before training, the corpus was cleaned: 4,234 duplicate essays removed and the split redone by prompt, because about 1,000 prompts appeared in both its train and test sets.
 
-## Six pillars
+## How it is built
 
-| Pillar | What |
-|---|---|
-| Relational DB | Postgres 17, schema `alt`: monthly partitions, bitemporal scores and forecasts (one current row by partial unique index), append-only hash-chained review ledger and audit log, writes only through functions |
-| APIs + backend | Next.js 16 route handlers; partner API v1 with OpenAPI 3.1, API keys stored as SHA-256, HMAC request signatures, Idempotency-Key replay, RFC 9457 errors, Postgres rate limits |
-| Distributed systems | pgmq queue with competing serverless workers, visibility timeout (at-least-once), idempotent effects (exactly-once), DLQ after 3 failures, coalesced readiness jobs, pg_cron + pg_net safety net with the secret in Vault; tested by killing a worker mid-batch |
-| AI / ML | LightGBM per IELTS criterion with features written once in TypeScript (used by training and serving), split-conformal intervals, tree-path explanations; Kalman filter per skill + Monte Carlo with IELTS rounding; offset calibration to official results; LLM feedback and reports that must quote the essay / cite numbered facts |
-| Cloud | Vercel sin1 + Supabase Singapore; standalone Dockerfile for a VPS behind Caddy |
-| Security | RLS per institution / cohort / learner, an ownerless login role switching to one role per path, guardian consent before any LLM call on a minor's essay, retention purge by pg_cron, export and erasure, CSP/HSTS, UU PDP mapping |
-
-## Layout
-
-```
-ml/               Python: corpus prep, writing model, ELLIPSE check, synthetic cohorts
-db/migrations/    schema, RLS, runtime functions (versioned)
-web/              Next.js app, API, worker, scripts (migrate, seed, cron, auth, SIT, screenshots)
+```mermaid
+flowchart LR
+  partner["Partner app"] -- "signed API calls" --> api["Next.js API<br/>Vercel, Singapore"]
+  staff["Teachers and admins"] --> web["Web dashboard"]
+  web --> db[("Postgres 17<br/>row-level security")]
+  api --> db
+  db -- "job queue" --> workers["Workers<br/>score essays, update forecasts"]
+  cron["Scheduler, every minute"] --> workers
+  workers --> db
+  workers -- "only with consent" --> llm["LLM<br/>feedback and reports"]
 ```
 
-## Run
+| Area | What is in it |
+|---|---|
+| **Relational database** | Postgres 17. Monthly partitions for attempts. Scores and forecasts keep every version with its valid dates, and a partial unique index allows exactly one current row. Teacher reviews and the audit log are append-only and hash-chained, so a silent edit is detectable. Users write only through database functions |
+| **APIs and backend** | Next.js 16 route handlers. A partner API (OpenAPI 3.1) with keys stored as SHA-256 hashes, HMAC-signed requests with a 5-minute window, `Idempotency-Key` replay, RFC 9457 error bodies, zod validation and per-key rate limits in Postgres |
+| **Distributed systems** | A pgmq job queue with competing serverless workers. A visibility timeout gives at-least-once delivery and idempotent writes make the effect exactly-once. Failed jobs move to a dead-letter queue after 3 tries. Forecast jobs for the same learner are coalesced. pg_cron calls the workers every minute with a secret kept in Vault. A built-in drill kills a worker mid-batch and checks that every job still finishes |
+| **AI and ML** | One LightGBM model per IELTS writing criterion. Features are written once in TypeScript and used by both Python training and live scoring (they match to within 1e-9). Conformal ranges, and a per-essay explanation of what moved the score. Readiness uses a Kalman filter per skill and 4,000 Monte Carlo runs with IELTS rounding, corrected against official results. LLM feedback must quote the essay word for word, and reports may only cite numbered facts. Anything that fails the check is dropped |
+| **Cloud and deployment** | Vercel (Singapore) and Supabase (Singapore), close to Indonesian users. A standalone Dockerfile runs the same app on any VPS |
+| **Security and privacy** | Row-level security per school, cohort and learner. The app's login role owns nothing and switches to one narrow role per request path. Guardian consent is checked in the database before any LLM call on a minor's essay. Automatic retention purge, data export and erasure, CSP and HSTS headers, login rate limits, and a mapping to Indonesia's data-protection law (UU PDP No. 27/2022) |
+
+## Project layout
+
+```
+ml/              Python: corpus cleaning, writing model, human-rater check, synthetic cohorts
+db/migrations/   schema, row-level security, runtime functions
+web/             Next.js app, partner API, workers, setup and test scripts
+```
+
+<details>
+<summary><b>Run it yourself</b></summary>
+
+Requires Node 24, pnpm, Python 3.12 with uv, the Supabase CLI and a Supabase project. Copy `.env.example` to `.env.local` and fill it in.
 
 ```bash
+# 1. data and models
 cd ml && uv sync && uv run python -m altimeter_ml.prep && cd ../web
 node scripts/dump-features.mjs ../ml/data/work/essays.jsonl ../ml/data/work/features.jsonl
 cd ../ml && uv run python -m altimeter_ml.train_writing && uv run python -m altimeter_ml.validate_ellipse && uv run python -m altimeter_ml.synth
+
+# 2. database and demo data
 cd ../web && pnpm install
 node scripts/backtest-readiness.mjs ../ml/data/work ../ml/artifacts/readiness_backtest.json
 node --env-file=../.env.local scripts/migrate.mjs
@@ -57,7 +82,15 @@ node scripts/build-seed.mjs ../ml/data/work ../db/seed && node --env-file=../.en
 node --env-file=../.env.local scripts/setup-auth.mjs
 node --env-file=../.env.local scripts/setup-cron.mjs https://<your-url>
 node --env-file=../.env.local scripts/seed-reviews.mjs ../db/seed/labels.json
-pnpm test && pnpm lint && node --env-file=../.env.local scripts/sit.mjs https://<your-url>
+
+# 3. tests
+pnpm test && pnpm lint
+node --env-file=../.env.local scripts/sit.mjs https://<your-url>
+node --env-file=../.env.local scripts/uat.mjs https://<your-url> /tmp
 ```
 
-Concept prototype by Muhammad Rafi Dhiyaulhaq. Not an official Acsent product.
+</details>
+
+---
+
+A concept prototype by Muhammad Rafi Dhiyaulhaq, built with Acsent's school programme in mind. Not affiliated with or endorsed by Acsent.

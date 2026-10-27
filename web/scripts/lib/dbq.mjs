@@ -5,7 +5,8 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const workdir = process.env.ALT_SUPABASE_WORKDIR ?? `${process.env.HOME}/Developer/perisai`
+// ALT_SUPABASE_WORKDIR: a folder where `supabase link` was run for the project.
+const workdir = process.env.ALT_SUPABASE_WORKDIR ?? process.cwd()
 
 export function runSql(text) {
   const dir = mkdtempSync(join(tmpdir(), 'alt-sql-'))

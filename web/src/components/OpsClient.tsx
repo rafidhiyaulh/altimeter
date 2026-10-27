@@ -96,7 +96,7 @@ export function ApiKeys({ institutions, keys }: { institutions: { id: number; na
           {active.length === 0 && <tr><td colSpan={4} className="muted">{t('Belum ada key aktif.', 'No active keys.')}</td></tr>}
         </tbody>
       </table></div>
-      {revoked > 0 && <div className="muted small">{t(`${revoked} key sudah dicabut dan tidak bisa dipakai lagi.`, `${revoked} revoked keys can no longer be used.`)}</div>}
+      {revoked > 0 && <div className="muted small">{t(`${revoked} key sudah dicabut dan tidak bisa dipakai lagi.`, revoked === 1 ? '1 revoked key can no longer be used.' : `${revoked} revoked keys can no longer be used.`)}</div>}
     </div>
   )
 }

@@ -122,7 +122,6 @@ export default async function EssayPage({ params }: { params: Promise<{ id: stri
                     <Facts tight items={[{ label: CRIT_SHORT('tr'), value: band(r.tr) }, { label: CRIT_SHORT('cc'), value: band(r.cc) }, { label: CRIT_SHORT('lr'), value: band(r.lr) }, { label: CRIT_SHORT('gra'), value: band(r.gra) },
                       { label: t('AI saat itu', 'AI then'), value: band(r.ai_overall) }, { label: t('Oleh', 'By'), value: r.reviewer ?? '-' }]} />
                     {r.note && <p className="small" style={{ marginTop: 4 }}>{r.note}</p>}
-                    <div className="mono small muted" title={r.hash}>{t('kode pengaman', 'seal')} {String(r.hash).slice(0, 12)}</div>
                   </li>
                 ))}
                 {versions.map(v => (

@@ -142,6 +142,7 @@ for (const [role, [email, pages]] of Object.entries(ROLES)) {
   const x = await http('GET', `/api/v1/students/${encodeURIComponent(other.external_ref)}/readiness`, { headers: { authorization: `Bearer ${key}` } })
   check("a key cannot read another institution's learner (404)", x.status === 404, `${x.status}`)
   runSql(`update alt.api_keys set revoked_at = now() where key_sha256 = ${lit(sha)}`)
+  cleanup.push(`delete from alt.api_keys where key_sha256 = ${lit(sha)}`)
   const rv = await http('GET', `/api/v1/students/${encodeURIComponent(stu.external_ref)}/readiness`, { headers: { authorization: `Bearer ${key}` } })
   check('a revoked key is refused (401)', rv.status === 401, `${rv.status}`)
 }

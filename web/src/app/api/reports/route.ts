@@ -9,7 +9,7 @@ import { body, handle } from '@/lib/route'
 const Body = z.object({ cohort_id: z.number().int(), lang: z.enum(['en', 'id']) })
 
 export function POST(req: Request) {
-  return handle(async () => {
+  return handle(req, async () => {
     const me = await apiMe(['teacher', 'inst_admin', 'platform'])
     const b = await body(req, Body)
     await rateLimit(me, 'report', 10, 600)

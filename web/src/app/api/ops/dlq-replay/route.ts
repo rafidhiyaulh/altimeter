@@ -5,7 +5,7 @@ import { handle } from '@/lib/route'
 import { kickWorkers } from '@/lib/worker'
 
 export function POST(req: Request) {
-  return handle(async () => {
+  return handle(req, async () => {
     const me = await apiMe(['platform'])
     const [r] = await asUser(me, tx => tx`select alt.dlq_replay() as n`)
     if (r.n > 0) after(() => kickWorkers(new URL(req.url).origin, 1, 'replay'))

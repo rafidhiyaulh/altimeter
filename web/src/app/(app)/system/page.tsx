@@ -3,8 +3,8 @@ import { asUser } from '@/lib/db'
 import { getT, titled } from '@/lib/i18n-server'
 import { llmModel } from '@/lib/llm'
 import { prior, writingModel } from '@/lib/scoring'
-import { dateTime, num, pct } from '@/lib/format'
-import { Card, PageHead } from '@/components/ui'
+import { ago, dateTime, num, pct } from '@/lib/format'
+import { Badge, Card, Lead, PageHead } from '@/components/ui'
 import { Term } from '@/components/Help'
 import { ApiKeys, OpsPanel } from '@/components/OpsClient'
 
@@ -30,16 +30,24 @@ export default async function System() {
       from alt.api_keys k join alt.institutions i on i.id = k.institution_id order by k.id desc`
     const insts = await tx`select id, name from alt.institutions order by id`
     const audit = await tx`select seq, at, actor_kind, action, target from alt.audit_log order by seq desc limit 8`
-    return { s, keys, insts, audit }
+    const routes = await tx`select route, method, count(*)::int as n, count(*) filter (where status >= 500)::int as errors,
+        percentile_disc(0.5) within group (order by ms) as p50, percentile_disc(0.95) within group (order by ms) as p95
+      from alt.request_log where at > now() - interval '24 hours' group by route, method order by n desc limit 8`
+    const [tot] = await tx`select count(*)::int as n, count(*) filter (where status >= 500)::int as errors,
+        percentile_disc(0.95) within group (order by ms) as p95 from alt.request_log where at > now() - interval '24 hours'`
+    const alerts = await tx`select kind, message, opened_at, last_seen_at, resolved_at from alt.alerts
+      where resolved_at is null or resolved_at > now() - interval '24 hours' order by resolved_at is null desc, opened_at desc limit 6`
+    return { s, keys, insts, audit, routes, tot, alerts }
   })
   const s = d.s
+  const openAlerts = d.alerts.filter(a => !a.resolved_at)
   const ACTION: Record<string, string> = {
     report: t('Laporan dibuat', 'Report drafted'), rescore_batch: t('Batch dinilai ulang', 'Batch re-scored'), attempts_ingest: t('Skor masuk lewat API', 'Scores received via API'),
     feedback: t('Feedback dibuat', 'Feedback drafted'), essay_submit: t('Esai dikirim', 'Essay submitted'), review: t('Esai dicek guru', 'Essay checked by a teacher'),
     consent_grant: t('Izin diberikan', 'Consent given'), consent_revoke: t('Izin dicabut', 'Consent revoked'), calibration: t('Koreksi dihitung ulang', 'Correction recalculated'),
     dsr_request: t('Permintaan data dibuka', 'Data request opened'), dsr_complete: t('Permintaan data selesai', 'Data request completed'),
     api_key_create: t('API key dibuat', 'API key created'), api_key_revoke: t('API key dicabut', 'API key revoked'), dlq_replay: t('Job gagal diulang', 'Failed jobs retried'),
-    official_result: t('Hasil IELTS resmi masuk', 'Official IELTS result received'), students_upsert: t('Data learner disinkron', 'Learners synced'),
+    official_result: t('Hasil IELTS resmi masuk', 'Official IELTS result received'), purge: t('Penghapusan data lama', 'Old data deleted'), students_upsert: t('Data learner disinkron', 'Learners synced'),
   }
   const ACTOR: Record<string, string> = { user: t('oleh pengguna', 'by a user'), api: t('lewat API', 'via API') }
   const pillars = [
@@ -68,6 +76,37 @@ export default async function System() {
   return (
     <>
       <PageHead title={t('Sistem & API', 'System & API')} sub={t('Cara Altimeter dibangun, dengan angka langsung dari sistem.', 'How Altimeter is built, with live numbers from the system.')} />
+      <Lead>
+        {openAlerts.length === 0 && d.tot.n === 0 ? t('Semua normal. Belum ada request API dalam 24 jam terakhir. Dicek otomatis tiap menit.', 'All clear. No API requests in the last 24 hours yet. Checked automatically every minute.')
+          : openAlerts.length === 0
+          ? t(`Semua normal. ${num(d.tot.n)} request API dalam 24 jam, ${pct(d.tot.n ? d.tot.errors / d.tot.n : 0, 1)} error server, 95% selesai dalam ${num(d.tot.p95 ?? 0)} ms. Dicek otomatis tiap menit.`,
+              `All clear. ${num(d.tot.n)} API requests in 24 hours, ${pct(d.tot.n ? d.tot.errors / d.tot.n : 0, 1)} server errors, 95% answered within ${num(d.tot.p95 ?? 0)} ms. Checked automatically every minute.`)
+          : t(`${openAlerts.length} alert terbuka. Lihat daftar di bawah.`, `${openAlerts.length} open alert(s). See the list below.`)}
+      </Lead>
+      <div className="cols-2" style={{ marginBottom: 20 }}>
+        <Card title={t('Waktu respons API, 24 jam', 'API response times, 24 hours')} sub={t('Setiap request dicatat setelah dijawab, jadi pencatatan tidak memperlambat.', 'Every request is logged after it is answered, so logging never slows it down.')} pad={false}>
+          <div className="table-wrap"><table className="data">
+            <thead><tr><th>{t('Route', 'Route')}</th><th className="num">{t('Request', 'Requests')}</th><th className="num">{t('Error server', 'Server errors')}</th><th className="num">p50</th><th className="num">p95</th></tr></thead>
+            <tbody>{d.routes.map(r => (
+              <tr key={r.method + r.route}><td><span className="muted small">{r.method}</span> <span className="mono small">{r.route}</span></td><td className="num">{num(r.n)}</td>
+                <td className={`num ${r.errors ? 'bad' : ''}`}>{num(r.errors)}</td><td className="num">{num(r.p50)} ms</td><td className="num">{num(r.p95)} ms</td></tr>))}
+              {d.routes.length === 0 && <tr><td colSpan={5} className="muted">{t('Belum ada request dalam 24 jam.', 'No requests in the last 24 hours.')}</td></tr>}
+            </tbody>
+          </table></div>
+        </Card>
+        <Card title={t('Alert', 'Alerts')} sub={t('Antrean macet, job gagal, error atau API lambat. Dibuka dan ditutup otomatis.', 'Stuck queue, failed jobs, errors or a slow API. Opened and closed automatically.')}>
+          <ul className="divided">
+            {d.alerts.map(a => (
+              <li key={a.kind + a.opened_at}>
+                <div className="row between"><Badge tone={a.resolved_at ? 'neutral' : 'bad'}>{a.resolved_at ? t('selesai', 'resolved') : t('terbuka', 'open')}</Badge>
+                  <span className="muted small">{a.resolved_at ? t(`ditutup ${ago(a.resolved_at)}`, `closed ${ago(a.resolved_at)}`) : t(`sejak ${ago(a.opened_at)}`, `since ${ago(a.opened_at)}`)}</span></div>
+                <p className="small" style={{ marginTop: 4 }}>{a.message}</p>
+              </li>
+            ))}
+            {d.alerts.length === 0 && <li className="muted">{t('Tidak ada alert dalam 24 jam terakhir.', 'No alerts in the last 24 hours.')}</li>}
+          </ul>
+        </Card>
+      </div>
       <div className="cols-2">
         <Card title={t('Cara kerja', 'How it works')}>
           {pillars.map((p, i) => (

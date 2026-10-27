@@ -9,7 +9,7 @@ const Body = z.object({ n: z.number().int().min(1).max(1000) })
 
 // Load test and model-upgrade drill: re-score n essays through the queue with 4 competing workers.
 export function POST(req: Request) {
-  return handle(async () => {
+  return handle(req, async () => {
     const me = await apiMe(['platform'])
     const { n } = await body(req, Body)
     const [r] = await asUser(me, tx => tx`select alt.start_rescore(${n}) as id`)

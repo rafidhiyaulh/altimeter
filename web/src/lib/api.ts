@@ -2,6 +2,7 @@ import 'server-only'
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 import { asApi } from './db'
 import { apiError, HttpError } from './auth'
+import { logRequest } from './observe'
 
 // Partner API (the prep platform pushing practice results and essays, pulling readiness):
 //   Authorization: Bearer <api key>                 -> looked up by SHA-256 only; the key itself is never stored
@@ -15,6 +16,12 @@ type Ctx = { keySha: string; raw: string; json: unknown }
 
 export function apiRoute(opts: { write: boolean }, fn: (ctx: Ctx) => Promise<{ status?: number; body: unknown }>) {
   return async (req: Request) => {
+    const started = Date.now()
+    const res = await run(req)
+    logRequest(req, res.status, started)
+    return res
+  }
+  async function run(req: Request): Promise<Response> {
     try {
       const key = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '').trim()
       if (!/^alt_[a-z]+_[A-Za-z0-9_-]{20,}$/.test(key)) throw new HttpError(401, 'invalid_api_key', 'Missing or malformed API key.')

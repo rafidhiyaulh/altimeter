@@ -40,10 +40,10 @@ export function OpsPanel() {
       </div>
       {b && (
         <div className="note info">
-          {t('Batch', 'Batch')} #{b.id}: <b>{b.done}</b> / {b.n} {t('esai dinilai ulang', 'essays re-scored')} {t('oleh', 'by')} {b.workers} worker
+          {t('Batch', 'Batch')} #{b.id}: <b>{Math.min(b.done, b.n)}</b> / {b.n} {t('esai dinilai ulang', 'essays re-scored')} {t('oleh', 'by')} {b.workers} {b.workers === 1 ? 'worker' : t('worker', 'workers')}
           {secs != null && b.done > 0 && <>{t(`, ${(b.done / Math.max(1, secs)).toFixed(1)} esai per detik, ${secs.toFixed(0)} detik.`, `, ${(b.done / Math.max(1, secs)).toFixed(1)} essays per second, ${secs.toFixed(0)} s.`)}</>}
           <div className="track" style={{ height: 4, background: 'var(--panel-alt)', borderRadius: 2, marginTop: 6 }}>
-            <div style={{ height: '100%', width: `${Math.min(100, (b.done / Math.max(1, b.n)) * 100)}%`, background: 'var(--brand)', borderRadius: 2 }} />
+            <div style={{ height: '100%', width: `${Math.min(100, (Math.min(b.done, b.n) / Math.max(1, b.n)) * 100)}%`, background: 'var(--brand)', borderRadius: 2 }} />
           </div>
         </div>
       )}

@@ -3,8 +3,8 @@ import { asUser } from '@/lib/db'
 import { handle } from '@/lib/route'
 
 // Live numbers for the System page: queue, latest batch progress, workers in the last 10 minutes.
-export function GET() {
-  return handle(async () => {
+export function GET(req: Request) {
+  return handle(req, async () => {
     const me = await apiMe(['platform'])
     const [r] = await asUser(me, tx => tx`
       with lt as (select * from alt.load_tests order by id desc limit 1)

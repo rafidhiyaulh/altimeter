@@ -9,7 +9,7 @@ const Body = z.object({ student_id: z.number().int(), scope: z.enum(['ai_feedbac
 
 // The evidence itself (signed form, message) stays with the institution; only its hash is stored.
 export function POST(req: Request) {
-  return handle(async () => {
+  return handle(req, async () => {
     const me = await apiMe(['inst_admin', 'platform'])
     const b = await body(req, Body)
     if (b.action === 'grant') {

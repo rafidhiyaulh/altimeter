@@ -11,7 +11,7 @@ const Body = z.object({ lang: z.enum(['en', 'id']) })
 // Feedback for one essay. The LLM is used only when the learner (or guardian) consented to AI feedback and
 // the token budget allows; otherwise rule-based feedback from the model's own evidence. Either way it is saved.
 export function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  return handle(async () => {
+  return handle(req, async () => {
     const me = await apiMe()
     const id = (await params).id
     if (!UUID.test(id)) throw new HttpError(400, 'bad_request')

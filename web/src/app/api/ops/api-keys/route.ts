@@ -9,7 +9,7 @@ const Body = z.object({ institution_id: z.number().int(), label: z.string().min(
 
 // The key is shown exactly once; only its SHA-256 and an 8-character prefix are stored.
 export function POST(req: Request) {
-  return handle(async () => {
+  return handle(req, async () => {
     const me = await apiMe(['platform', 'inst_admin'])
     const b = await body(req, Body)
     const prefix = randomBytes(4).toString('hex')

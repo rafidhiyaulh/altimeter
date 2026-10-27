@@ -3,8 +3,8 @@ import { asUser } from '@/lib/db'
 import { handle } from '@/lib/route'
 
 // Complete a request. Export returns the JSON document as a download; erase returns what was kept.
-export function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  return handle(async () => {
+export function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  return handle(req, async () => {
     const me = await apiMe(['inst_admin', 'platform'])
     const id = Number((await params).id)
     if (!Number.isInteger(id)) throw new HttpError(400, 'bad_request')

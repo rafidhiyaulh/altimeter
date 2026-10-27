@@ -4,13 +4,13 @@ import { writingModel, prior } from '@/lib/scoring'
 
 export const dynamic = 'force-dynamic'
 
-// Liveness for the database, queue, models and LLM, plus the region and commit actually serving traffic.
+// Liveness for the database, queue, open alerts, models and LLM, for an external uptime monitor.
 export async function GET() {
   const started = Date.now()
   let db: object = { ok: false }
   try {
-    const [r] = await asWorker(tx => tx`select alt.q_stats() as q, now() as at`)
-    db = { ok: true, ms: Date.now() - started, queue: r.q }
+    const [r] = await asWorker(tx => tx`select alt.q_stats() as q, alt.open_alerts() as alerts`)
+    db = { ok: true, ms: Date.now() - started, queue: r.q, open_alerts: r.alerts }
   } catch (e) {
     db = { ok: false, error: (e as Error).message.slice(0, 120) }
   }
@@ -20,6 +20,5 @@ export async function GET() {
     models: { writing: writingModel.version, readiness: prior.version },
     llm: { configured: llmConfigured(), model: llmModel() },
     region: process.env.VERCEL_REGION ?? 'local',
-    commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
   }, { headers: { 'cache-control': 'no-store' } })
 }

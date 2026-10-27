@@ -10,7 +10,7 @@ export const maxDuration = 60
 // a batch it never deletes. Those messages must come back after the visibility timeout and be finished by
 // the others, with exactly one current score per essay at the end.
 export function POST(req: Request) {
-  return handle(async () => {
+  return handle(req, async () => {
     const me = await apiMe(['platform'])
     const [r] = await asUser(me, tx => tx`select alt.start_rescore(60) as id`)
     const origin = process.env.ALT_PUBLIC_URL || new URL(req.url).origin

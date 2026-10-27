@@ -3,8 +3,8 @@ import { asUser } from '@/lib/db'
 import { UUID } from '@/lib/guard'
 import { handle } from '@/lib/route'
 
-export function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  return handle(async () => {
+export function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  return handle(req, async () => {
     const me = await apiMe()
     const id = (await params).id
     if (!UUID.test(id)) throw new HttpError(400, 'bad_request')

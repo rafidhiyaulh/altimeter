@@ -1,0 +1,19 @@
+{
+  "corpus": "ELLIPSE (Crossley et al., 2023), training release, human holistic scores 1-5",
+  "n": 3911,
+  "spearman_model_vs_human": 0.39,
+  "spearman_length_vs_human": 0.239,
+  "partial_spearman_controlling_length": 0.403,
+  "per_criterion_spearman": {
+    "TR": 0.388,
+    "CC": 0.203,
+    "LR": 0.281,
+    "GRA": 0.217
+  },
+  "human_analytic_vs_our_criterion": {
+    "Vocabulary~LR": 0.232,
+    "Grammar~GRA": 0.215,
+    "Cohesion~CC": 0.274
+  },
+  "note": "Different population (US secondary ELLs) and scale; a ranking check, not an IELTS accuracy claim."
+}
